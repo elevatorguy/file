@@ -1,3 +1,4 @@
+bin
 *.EFI
 *.d
 *.o
@@ -9,3 +10,4 @@
 *.pe
 *.binelf
 *.binpe
+lib
