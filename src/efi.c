@@ -1237,49 +1237,41 @@ EFI_STATUS test_graphics(void) {
 
     cout->ClearScreen(cout);
 
-    // Allocate buffer for kernel bitmap fonts
     info.num_fonts = 2;
     status = bs->AllocatePool(EfiLoaderData, 
                               info.num_fonts * sizeof *info.fonts, 
                               (VOID **)&info.fonts);
     if (EFI_ERROR(status)) {
-        error(status, u"Could not allocate buffer for kernel bitmap font parms.\r\n");
+        error(status, u"Could not allocate buffer for bitmap font parms.\r\n");
         goto cleanup;
     }
 
-    // Get simple font info & glyphs from HII database for kernel to use as a bitmap font 
-    //   for printing
     pkg_list = hii_database_package_list(EFI_HII_PACKAGE_SIMPLE_FONTS);    
     if (pkg_list) {
-        // Fill in kernel parm font with narrow glyph info from EFI HII simple font (8x19)
         EFI_HII_SIMPLE_FONT_PACKAGE_HDR *simple_font_hdr = 
           (EFI_HII_SIMPLE_FONT_PACKAGE_HDR *)(pkg_list + 1);
 
-        // Fill out bitmap font info
         info.fonts[0] = (Bitmap_Font){
             .name = "efi_system_narrow_01",
             .width = EFI_GLYPH_WIDTH,
             .height = EFI_GLYPH_HEIGHT,
             .num_glyphs = simple_font_hdr->NumberOfNarrowGlyphs,
             .glyphs = NULL,
-            .left_col_first = false,    // Bits in memory are laid out right to left
+            .left_col_first = false,    // is this endianness or LSB/MSB?
         };
 
-        // Allocate buffer for glyph data, try to have at least full ASCII + code page range
         UINTN max_glyphs = max(256, simple_font_hdr->NumberOfNarrowGlyphs);
         Bitmap_Font font = info.fonts[0];
         UINTN glyph_size = ((font.width + 7) / 8) * font.height; 
 
-        // Allocate extra 8 bytes for bitmap mask printing in kernel
         status = bs->AllocatePool(EfiLoaderData, 
                                   (max_glyphs * glyph_size) + 8,    
                                   (VOID **)&info.fonts[0].glyphs);
         if (EFI_ERROR(status)) {
-            error(status, u"Could not allocate buffer for kernel parm font narrow glyphs bitmaps.\r\n");
+            error(status, u"Could not allocate buffer for font info: narrow glyphs bitmaps.\r\n");
             goto cleanup;
         }
 
-        // Copy narrow glyphs into buffer, start at lowest/first glyph to 0-init or skip others
         memset(info.fonts[0].glyphs, 0, max_glyphs * glyph_size);
 
         EFI_NARROW_GLYPH *narrow_glyphs = (EFI_NARROW_GLYPH *)(simple_font_hdr + 1);
@@ -1302,8 +1294,6 @@ EFI_STATUS test_graphics(void) {
     if (!psf_font) {
 		//TODO: if ESP is whole disk then that's that - abort
 
-	    // Get PSF font file for another bitmap font to use;
-	    //   this one should be stored in the disk image's data partition
 	    psf_font = read_data_partition_file_to_buffer(psf_name, false, &psf_size);
 	}
 
@@ -1313,18 +1303,17 @@ EFI_STATUS test_graphics(void) {
             .name            = psf_name,
             .width           = psf2_hdr->width,
             .height          = psf2_hdr->height,
-            .left_col_first  = true,                   // Pixels in memory are stored left to right
+            .left_col_first  = true,
             .num_glyphs      = psf2_hdr->num_glyphs,
             .glyphs          = (uint8_t *)(psf2_hdr+1),
         };
     }
 
-    // Get GOP protocol via LocateProtocol()
     EFI_GUID gop_guid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
     EFI_GRAPHICS_OUTPUT_PROTOCOL *gop = NULL;
     EFI_GRAPHICS_OUTPUT_MODE_INFORMATION *mode_info = NULL;
     UINTN mode_info_size = sizeof(EFI_GRAPHICS_OUTPUT_MODE_INFORMATION);
-    UINTN mode_index = 0;   // Current mode within entire menu of GOP mode choices;
+    UINTN mode_index = 0;
 
     status = bs->LocateProtocol(&gop_guid, NULL, (VOID **)&gop);
     if (EFI_ERROR(status)) {
@@ -1336,21 +1325,17 @@ EFI_STATUS test_graphics(void) {
     }
 
     gop->QueryMode(gop, mode_index, &mode_info_size, &mode_info);
-
-    // Grab Framebuffer/GOP info
     fb = (uint32_t*)gop->Mode->FrameBufferBase;
 
     xres = mode_info->PixelsPerScanLine;
     yres = mode_info->VerticalResolution;
 
-    // Clear screen to solid color
     UINTN color = ARGB_BLUE;
     for (y = 0; y < yres; y++) 
         for (x = 0; x < xres; x++) 
             fb[y*xres + x] = color;
 
-    // Print test string(s)
-    x = y = 0;  // Reset to 0,0 position
+    x = y = 0;
     Bitmap_Font* font1 = &info.fonts[0];
     Bitmap_Font* font2 = &info.fonts[1];
     print_string("Hello, bitmap font world!", font1);
@@ -1358,8 +1343,8 @@ EFI_STATUS test_graphics(void) {
     print_string(font1->name, font1);
     print_string("\r\nFont 2 Name: ", font2);
     print_string(font2->name, font2);
+    print_string("\r\n", font2);
 
-    // Test runtime services by waiting a few seconds and then shutting down
     EFI_TIME old_time = {0}, new_time = {0};
     EFI_TIME_CAPABILITIES time_cap = {0};
     UINTN i = 0;
@@ -1372,19 +1357,19 @@ EFI_STATUS test_graphics(void) {
         }
     }
 
-    if (psf_font) bs->FreePool(psf_font); // Free memory for data partition file
+	print_string("\r\nPress any key to go back...\r\n", font1);
+
+    if (psf_font) bs->FreePool(psf_font);
     cleanup:
-    if (pkg_list) bs->FreePool(pkg_list); // Free memory for simple font package list
+    if (pkg_list) bs->FreePool(pkg_list);
 
     if (info.fonts) {
-        // Free memory for font glyph(s) info
         for (UINTN i = 0; i < info.num_fonts; i++)
             bs->FreePool(info.fonts[i].glyphs);
 
-        bs->FreePool(info.fonts);   // Free memory for font(s) array info
+        bs->FreePool(info.fonts);
     }
 
-	printf_c16(u"Press any key to go back...\r\n");
 	get_key();
 	return EFI_SUCCESS;
 }
