@@ -989,6 +989,7 @@ EFI_STATUS read_esp_files(void) {
 
                     // Print buffer contents
                     printf_c16(u"\r\nFile Contents:\r\n");
+                    bs->CloseEvent(timer_event);
 
                     char *pos = (char *)buffer;
                     for (UINTN bytes = buf_size; bytes > 0; bytes--) {
