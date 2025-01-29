@@ -2036,6 +2036,11 @@ EFI_STATUS change_boot_variables(void) {
                     goto next;
                 }
 
+                if (!memcmp(var_name_buf, u"BootFlow", 18)) {
+                    // Undefined?
+                    goto next;
+                }
+
                 if (isxdigit_c16(var_name_buf[4]) && var_name_size == 18) {  
                     // Boot#### load option: Name size = 8 CHAR16 chars * 2 bytes + CHAR16 null bytes
                     EFI_LOAD_OPTION *load_option = (EFI_LOAD_OPTION *)data;
