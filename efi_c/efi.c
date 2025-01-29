@@ -813,6 +813,69 @@ EFI_STATUS test_network(void) {
     }
     else {
         printf_c16(u"Network protocol(s) found.\r\n");
+
+        //print out EFI_SIMPLE_NETWORK_MODE
+        printf_c16(u"  State: %x,\r\n  HwAddressSize: %x,\r\n  MediaHeaderSize: %x,\r\n  MaxPacketSize: %x,\r\n  NvRamSize: %x,\r\n  NvRamAccessSize: %x,\r\n"
+            u"  ReceiveFilterMask: %x,\r\n  ReceiveFilterMaskSetting: %x,\r\n  MaxMCastFilterCount: %x,\r\n"
+            u"  IfType: %x,\r\n  MacAddressChangable: %x,\r\n  MultipleTxSupported: %x,\r\n  MediaPresentSupported: %x,\r\n  MediaPresent: %x\r\n",
+            netProtocol->Mode->State,
+            netProtocol->Mode->HwAddressSize,
+            netProtocol->Mode->MediaHeaderSize,
+            netProtocol->Mode->MaxPacketSize,
+            netProtocol->Mode->NvRamSize,
+            netProtocol->Mode->NvRamAccessSize,
+            netProtocol->Mode->ReceiveFilterMask,
+            netProtocol->Mode->ReceiveFilterSetting,
+            netProtocol->Mode->MaxMCastFilterCount,
+            //netProtocol->Mode->MCastFilter,
+            //netProtocol->Mode->CurrentAddress,
+            //netProtocol->Mode->BroadcastAddress,
+            //netProtocol->Mode->PermanentAddress,
+            netProtocol->Mode->IfType,
+            netProtocol->Mode->MacAddressChangeable,
+            netProtocol->Mode->MultipleTxSupported,
+            netProtocol->Mode->MediaPresentSupported,
+            netProtocol->Mode->MediaPresent
+            );
+        EFI_NETWORK_STATISTICS* netStat;
+        status = netProtocol->Statistics(netProtocol, false, NULL, netStat);
+        if(status == EFI_SUCCESS && netStat != 0) {
+            printf_c16(u"Statistics:\r\n"
+            u"  RxTotalFrames: %llx,\r\n  RxGoodFrames: %llx,\r\n  RxUndersizeFrames: %llx,\r\n  RxOversizeFrames: %llx,\r\n"
+            u"  RxDroppedFrames: %llx,\r\n  RxUnicastFrames: %llx,\r\n  RxBroadcastFrames: %llx\r\n, RxMulticastFrames: %llx,\r\n"
+            u"  RxCrcErrorFrames: %llx,\r\n  RxTotalBytes: %llx,\r\n"
+            u"  TxTotalFrames: %llx,\r\n  TxGoodFrames: %llx,\r\n  TxUndersizeFrames: %llx,\r\n  TxOversizeFrames: %llx,\r\n"
+            u"  TxDroppedFrames: %llx,\r\n  TxUnicastFrames: %llx,\r\n  TxBroadcastFrames: %llx\r\n, TxMulticastFrames: %llx,\r\n"
+            u"  TxCrcErrorFrames: %llx,\r\n  TxTotalBytes: %llx,\r\n"
+            u"  Collisions: %llx,\r\n  UnsupportedProtocol: %llx,\r\n  RxDuplicatedFrames: %llx\r\n, RxDecryptErrorFrames: %llx,\r\n"
+            u"  TxErrorFrames: %llx,\r\n  TxRetryFrames: %llx\r\n",
+            netStat->RxTotalFrames,
+            netStat->RxGoodFrames,
+            netStat->RxUndersizeFrames,
+            netStat->RxOversizeFrames,
+            netStat->RxDroppedFrames,
+            netStat->RxUnicastFrames,
+            netStat->RxBroadcastFrames,
+            netStat->RxMulticastFrames,
+            netStat->RxCrcErrorFrames,
+            netStat->RxTotalBytes,
+            netStat->TxTotalFrames,
+            netStat->TxGoodFrames,
+            netStat->TxUndersizeFrames,
+            netStat->TxOversizeFrames,
+            netStat->TxDroppedFrames,
+            netStat->TxUnicastFrames,
+            netStat->TxBroadcastFrames,
+            netStat->TxMulticastFrames,
+            netStat->TxCrcErrorFrames,
+            netStat->TxTotalBytes,
+            netStat->Collisions,
+            netStat->UnsupportedProtocol,
+            netStat->RxDuplicatedFrames,
+            netStat->RxDecryptErrorFrames,
+            netStat->TxErrorFrames,
+            netStat->TxRetryFrames);
+        }
     }
     get_key();
     return status;
