@@ -12,4 +12,4 @@ Hardware:
 >
 >    [Links to UEFI Specification - Related Documents](https://uefi.org/uefi)
 
->    [Complete Driver Pack - Ethernet](https://www.intel.com/content/www/us/en/download/15084/intel-ethernet-adapter-complete-driver-pack.html?wapkw=Intel%20I219-V%20efi)
+>    [Ethernet - E0017X7.EFI](https://dlcdnets.asus.com/pub/ASUS/mb/04LAN/IntelLAN22.4.16.0_RS2_20170718.zip?model=Z170-A)
