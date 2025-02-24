@@ -11,7 +11,7 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
     // Clear screen to bg color 
     SystemTable->ConOut->ClearScreen(SystemTable->ConOut);
 
-    SystemTable->ConOut->OutputString(SystemTable->ConOut, u"Hello, World!\r\n\r\n");
+    SystemTable->ConOut->OutputString(SystemTable->ConOut, u"Hello, World!\r\n\r\n"); //TODO: portrait mode
     
     // Set text to red fg/ black bg 
     SystemTable->ConOut->SetAttribute(SystemTable->ConOut, 

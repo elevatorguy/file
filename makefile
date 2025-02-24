@@ -1,7 +1,7 @@
 .POSIX:
 .PHONY: all clean
 
-SOURCE = efi.c
+SOURCE = src/efi.c
 TARGET = BOOTX64.EFI
 
 ifeq ($(OS), Windows_NT)
@@ -31,9 +31,10 @@ CFLAGS = \
 	-Wpedantic \
 	-mno-red-zone \
 	-ffreestanding \
-	-nostdlib 
+	-nostdlib \
+	-I include
 
-DISK_IMG_FOLDER = ../UEFI-GPT-image-creator
+DISK_IMG_FOLDER = bin
 DISK_IMG_PGM    = write_gpt
 
 all: $(DISK_IMG_FOLDER)/$(DISK_IMG_PGM) $(TARGET)
