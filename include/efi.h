@@ -8,6 +8,7 @@
 #endif
 
 #include <stdint.h>
+#include <stdbool.h>
 #include <stddef.h> // NULL
 
 #ifndef _UCHAR_H
@@ -15,12 +16,22 @@ typedef uint_least16_t char16_t;
 #endif
 
 // Common UEFI Data Types: UEFI Spec 2.10 section 2.3.1
+typedef uint8_t     UINT8;
 typedef uint16_t    UINT16;
 typedef uint32_t    UINT32;
 typedef uint64_t    UINT64;
 typedef uint64_t    UINTN;
 typedef char16_t    CHAR16;	// UTF-16, but should use UCS-2 code points 0x0000-0xFFFF
 typedef void        VOID;
+
+typedef struct {
+    UINT32 TimeLow;
+    UINT16 TimeMid;
+    UINT16 TimeHighAndVersion;
+    UINT8  ClockSeqHighAndReserved;
+    UINT8  ClockSeqLow;
+    UINT8  Node[6];
+} __attribute__ ((packed)) EFI_GUID;
 
 typedef UINTN       EFI_STATUS;
 typedef VOID*       EFI_HANDLE;
@@ -184,3 +195,121 @@ typedef struct {
 	void*                           ConfigurationTable;
 } EFI_SYSTEM_TABLE;
 
+// 34.8.1 EFI_HII_DATABASE_PROTOCOL
+#define EFI_HII_DATABASE_PROTOCOL_GUID \
+{0xef9fc172, 0xa1b2, 0x4693,\
+0xb3, 0x27, {0x6d, 0x32, 0xfc, 0x41, 0x60, 0x42}}
+
+// HII PACKAGE HEADER: UEFI Spec 2.10A section 33.3.1.1
+typedef struct {
+    UINT32 Length:24;
+    UINT32 Type:8;
+    // UINT8 Data[...];
+} EFI_HII_PACKAGE_HEADER;
+
+// HII PACKAGE TYPES
+#define EFI_HII_PACKAGE_TYPE_ALL          0x00
+#define EFI_HII_PACKAGE_TYPE_GUID         0x01
+#define EFI_HII_PACKAGE_FORMS             0x02
+#define EFI_HII_PACKAGE_STRINGS           0x04
+#define EFI_HII_PACKAGE_FONTS             0x05
+#define EFI_HII_PACKAGE_IMAGES            0x06
+#define EFI_HII_PACKAGE_SIMPLE_FONTS      0x07
+#define EFI_HII_PACKAGE_DEVICE_PATH       0x08
+#define EFI_HII_PACKAGE_KEYBOARD_LAYOUT   0x09
+#define EFI_HII_PACKAGE_ANIMATIONS        0x0A
+#define EFI_HII_PACKAGE_END               0xDF
+#define EFI_HII_PACKAGE_TYPE_SYSTEM_BEGIN 0xE0
+#define EFI_HII_PACKAGE_TYPE_SYSTEM_END   0xFF
+
+// HII PACKAGE LIST HEADER: UEFI Spec 2.10A section 33.3.1.2
+typedef struct {
+    EFI_GUID PackageListGuid;
+    UINT32   PackagLength;
+} EFI_HII_PACKAGE_LIST_HEADER;
+
+// HII SIMPLE FONT PACKAGE HEADER: UEFI Spec 2.10A section 33.3.2
+typedef struct {
+    EFI_HII_PACKAGE_HEADER Header;
+    UINT16                 NumberOfNarrowGlyphs;
+    UINT16                 NumberOfWideGlyphs;
+    // EFI_NARROW_GLYPH NarrowGlyphs[];
+    // EFI_WIDE_GLYPH WideGlyphs[];
+} EFI_HII_SIMPLE_FONT_PACKAGE_HDR;
+
+// Contents of EFI_NARROW_GLYPH.Attributes
+#define EFI_GLYPH_NON_SPACING 0x01
+#define EFI_GLYPH_WIDE        0x02
+#define EFI_GLYPH_HEIGHT      19
+#define EFI_GLYPH_WIDTH       8
+
+// EFI NARROW GLYPH: UEFI Spec 2.10A section 33.3.2.2   
+// should be 8x19 monospaced bitmap font
+typedef struct {
+    CHAR16 UnicodeWeight;
+    UINT8  Attributes;
+    UINT8  GlyphCol1[EFI_GLYPH_HEIGHT];
+} EFI_NARROW_GLYPH;
+
+// EFI WIDE GLYPH: UEFI Spec 2.10A section 33.3.2.3   
+// should be 16x19 monospaced bitmap font
+typedef struct {
+    CHAR16 UnicodeWeight;
+    UINT8  Attributes;
+    UINT8  GlyphCol1[EFI_GLYPH_HEIGHT];
+    UINT8  GlyphCol2[EFI_GLYPH_HEIGHT];
+    UINT8  Pad[3];
+} EFI_WIDE_GLYPH;
+
+// NOTE: This is _not_ an EFI_HANDLE!
+typedef void *EFI_HII_HANDLE;
+
+// Forward declare for function declarations to work
+typedef struct EFI_HII_DATABASE_PROTOCOL EFI_HII_DATABASE_PROTOCOL;
+
+// EFI_HII_DATABASE_LIST_PACKS: UEFI Spec 2.10A section 34.8.5
+typedef
+EFI_STATUS
+(EFIAPI *EFI_HII_DATABASE_LIST_PACKS) (
+    IN CONST EFI_HII_DATABASE_PROTOCOL *This,
+    IN UINT8                           PackageType,
+    IN CONST EFI_GUID                  *PackageGuid,
+    IN OUT UINTN                       *HandleBufferLength,
+    OUT EFI_HII_HANDLE                 *Handle
+);
+
+// EFI_HII_DATABASE_EXPORT_PACKS: UEFI Spec 2.10A section 34.8.6
+typedef 
+EFI_STATUS
+(EFIAPI *EFI_HII_DATABASE_EXPORT_PACKS) (
+    IN CONST EFI_HII_DATABASE_PROTOCOL *This,
+    IN EFI_HII_HANDLE                  Handle,
+    IN OUT UINTN                       *BufferSize,
+    OUT EFI_HII_PACKAGE_LIST_HEADER    *Buffer
+);
+
+// HII DATABASE PROTOCOL: UEFI Spec 2.10A section 34.8.1
+typedef struct EFI_HII_DATABASE_PROTOCOL {
+    //EFI_HII_DATABASE_NEW_PACK          NewPackageList;
+    //EFI_HII_DATABASE_REMOVE_PACK       RemovePackageList;
+    //EFI_HII_DATABASE_UPDATE_PACK       UpdatePackageList;
+    void                               *NewPackageList;
+    void                               *RemovePackageList;
+    void                               *UpdatePackageList;
+
+    EFI_HII_DATABASE_LIST_PACKS        ListPackageLists;
+    EFI_HII_DATABASE_EXPORT_PACKS      ExportPackageLists;
+
+    //EFI_HII_DATABASE_REGISTER_NOTIFY   RegisterPackageNotify;
+    //EFI_HII_DATABASE_UNREGISTER_NOTIFY UnregisterPackageNotify;
+    //EFI_HII_FIND_KEYBOARD_LAYOUTS      FindKeyboardLayouts;
+    //EFI_HII_GET_KEYBOARD_LAYOUT        GetKeyboardLayout;
+    //EFI_HII_SET_KEYBOARD_LAYOUT        SetKeyboardLayout;
+    //EFI_HII_DATABASE_GET_PACK_HANDLE   GetPackageListHandle;
+    void                               *RegisterPackageNotify;
+    void                               *UnregisterPackageNotify;
+    void                               *FindKeyboardLayouts;
+    void                               *GetKeyboardLayout;
+    void                               *SetKeyboardLayout;
+    void                               *GetPackageListHandle;
+} EFI_HII_DATABASE_PROTOCOL;
