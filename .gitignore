@@ -1,4 +1,4 @@
-bin
+lib
 *.EFI
 *.d
 *.o
@@ -10,4 +10,5 @@ bin
 *.pe
 *.binelf
 *.binpe
-lib
+*.raw
+bin

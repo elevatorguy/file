@@ -1,121 +1,52 @@
-# Aiming for (mostly) POSIX.1-2024 compliance
 .POSIX:
+.PHONY: all clean
 
-# Set architecture and machine type if wanted
-# Can override on command line with 'ARCH=<arch> MACHINE=<machine> make'
-ARCH 	?= x86_64
-MACHINE ?= unknown
+SOURCE = src/efi.c
+TARGET = BOOTX64.EFI
 
-# Uncomment disk image program & shell script 
-#DISK_IMG_PGM ::= write_gpt.exe		# Windows
-#QEMU_SCRIPT  ::= qemu.bat			# Windows
-DISK_IMG_PGM ::= write_gpt			# Linux
-QEMU_SCRIPT	 ::= qemu_$(ARCH).sh	# Linux
+ifeq ($(OS), Windows_NT)
+QEMU = ./qemu.bat
+DISK_FLAGS = --vhd
+else
+QEMU = ./qemu.sh
+DISK_FLAGS =
+endif
 
-DISK_IMG_FOLDER ::= ../UEFI-GPT-image-creator/
-
-# Uncomment CC/LDFLAGS for EFI object - gcc
-#EFICC       ::= $(ARCH)-w64-mingw32-gcc
-#EFI_LDFLAGS ::= \
-	-nostdlib \
+# Uncomment for gcc, or move to OS check above, etc.
+CC = x86_64-w64-mingw32-gcc \
 	-Wl,--subsystem,10 \
 	-e efi_main 
 
-# Uncomment CC/LDFLAGS for EFI object - clang
-EFICC       ::= clang -target $(ARCH)-$(MACHINE)-windows 
-EFI_LDFLAGS ::= \
-	-nostdlib \
+# Uncomment for clang, or move to OS check above, etc.
+#CC = clang \
+	-target x86_64-unknown-windows \
 	-fuse-ld=lld-link \
 	-Wl,-subsystem:efi_application \
 	-Wl,-entry:efi_main
 
-# ELF files
-ELFCC ::= clang -target $(ARCH)-$(MACHINE)-elf 
-ELFLD ::= ld.lld
-
-# PE32+ files
-PECC  ::= $(ARCH)-w64-mingw32-gcc
-PELD  ::= $(ARCH)-w64-mingw32-ld
-
-# Common CFLAGS
-CFLAGS ::= \
+CFLAGS = \
 	-std=c17 \
-	-MMD \
 	-Wall \
 	-Wextra \
 	-Wpedantic \
 	-mno-red-zone \
 	-ffreestanding \
-	-fno-stack-protector	# Freestanding programs do not have libc stack protector functions
+	-nostdlib \
+	-I include
 
-# Define arch/machine types for #ifdef, etc. use in source files
-# -I include for "#include <arch/ARCH/ARCH.h>" or other files under top level "include" directory
-CFLAGS += -D ARCH=$(ARCH) -D MACHINE=$(MACHINE) -I include
+DISK_IMG_FOLDER = bin
+DISK_IMG_PGM    = write_gpt
 
-KERNEL_SRC     ::= kernel.c
-KERNEL_CFLAGS  ::= $(CFLAGS) -fPIE
-KERNEL_LDFLAGS ::= -e kmain -nostdlib -pie
-
-EFISRC  ::= efi.c
-EFIOBJ  ::= $(EFISRC:%.c=%_$(ARCH).o)
-DEPENDS ::= $(EFIOBJ:.o=.d) $(KERNEL_SRC:.c=.d)
-
-# EFI application to use, should automatically boot from UEFI/OVMF if in /EFI/BOOT/ folder in 
-#  the EFI System Partition (ESP)
-ifeq ($(ARCH), x86_64) 
-EFI_APP ::= BOOTX64.EFI
-else ifeq ($(ARCH), aarch64) 
-EFI_APP ::= BOOTAA64.EFI
-endif
-
-# Uncomment kernel binary format to build
-KERNEL ::= kernel.elf    # ELF64 PIE kernel binary
-#KERNEL ::= kernel.pe     # PE32+ PIE kernel binary
-#KERNEL ::= kernel.binelf # Flat binary PIE kernel from ELF file
-#KERNEL ::= kernel.binpe  # Flat binary PIE kernel from PE file
-
-FONT ::= ter-132n.psf	# PSF2 Bitmapped Font: Terminus 16x32 ISO8859-1
-
-# Add kernel binary to new disk image
-ADD_KERNEL = \
-	cd $(DISK_IMG_FOLDER); \
-	./$(DISK_IMG_PGM) -ae /EFI/BOOT/ ../efi_c/$(EFI_APP) \
-					  -ad ../efi_c/$(KERNEL) ../efi_c/$(FONT);
-
-all: $(DISK_IMG_FOLDER)/$(DISK_IMG_PGM) $(EFI_APP) $(KERNEL) 
-	./$(QEMU_SCRIPT)
+all: $(DISK_IMG_FOLDER)/$(DISK_IMG_PGM) $(TARGET)
+	cd $(DISK_IMG_FOLDER) && $(QEMU)
 
 $(DISK_IMG_FOLDER)/$(DISK_IMG_PGM):
-	cd $(DISK_IMG_FOLDER) && $(MAKE) 
+	cd $(DISK_IMG_FOLDER) && $(MAKE)
 
-$(EFI_APP): $(EFIOBJ) 
-	$(EFICC) $(EFI_LDFLAGS) -o $@ $<
-	$(ADD_KERNEL)
-
-$(EFIOBJ): $(EFISRC)
-	$(EFICC) $(CFLAGS) -c -o $@ $<
-
-kernel.elf: $(KERNEL_SRC)
-	$(ELFCC) $(KERNEL_CFLAGS) $(KERNEL_LDFLAGS) -o $@ $<
-	$(ADD_KERNEL)
-
-kernel.pe: $(KERNEL_SRC)
-	$(PECC) $(KERNEL_CFLAGS) $(KERNEL_LDFLAGS) -o $@ $<
-	$(ADD_KERNEL)
-
-kernel.binelf: $(KERNEL_SRC)
-	$(ELFCC) -c $(KERNEL_CFLAGS) -o kernel.o $<
-	$(ELFLD) $(KERNEL_LDFLAGS) -Tkernel.ld --oformat binary -o $@ kernel.o 
-	$(ADD_KERNEL)
-
-kernel.binpe: $(KERNEL_SRC)
-	$(PECC) -c $(KERNEL_CFLAGS) -o kernel.o $<
-	$(PELD) $(KERNEL_LDFLAGS) -Tkernel.ld --image-base=0 -o kernel.obj kernel.o
-	objcopy -O binary kernel.obj $@
-	$(ADD_KERNEL)
-
--include $(DEPENDS)
+$(TARGET): $(SOURCE)
+	$(CC) $(CFLAGS) -o $@ $<
+	cp $(TARGET) $(DISK_IMG_FOLDER); \
+	cd $(DISK_IMG_FOLDER) && ./$(DISK_IMG_PGM) $(DISK_FLAGS)
 
 clean:
-	rm -rf $(EFI_APP) $(KERNEL) [!bios]*.bin* *.d *.efi *.EFI *.elf *.o *.obj *.pe
-
+	rm -rf $(TARGET)

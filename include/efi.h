@@ -9,6 +9,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <stdbool.h>
 #include <stddef.h> // NULL
 
 // UEFI Spec 2.10 section 2.4
@@ -1596,4 +1597,3 @@ typedef struct EFI_HII_DATABASE_PROTOCOL {
     void                               *SetKeyboardLayout;
     void                               *GetPackageListHandle;
 } EFI_HII_DATABASE_PROTOCOL;
-
