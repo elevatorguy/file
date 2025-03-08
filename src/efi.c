@@ -3,16 +3,6 @@
 // PSF Font types
 // Adapted from https://wiki.osdev.org/PC_Screen_Font
 #define PSF2_FONT_MAGIC 0x864ab572
-typedef struct {
-    uint32_t magic;
-    uint32_t version;
-    uint32_t headersize;
-    uint32_t flags;
-    uint32_t num_glyphs;
-    uint32_t bytes_per_glyph;
-    uint32_t height;
-    uint32_t width;
-} PSF2_Header;
 
 #define ARGB_LIGHTGRAY (0xFFDDDDDD)
 #define ARGB_RED (0xFFCC2222)
@@ -25,14 +15,8 @@ uint32_t yres = 0;   // Y/Vertical resolution of framebuffer
 uint32_t x = 0;      // X offset into framebuffer
 uint32_t y = 0;      // Y offset into framebuffer
 
-typedef struct {
-    char*    name;
-    uint32_t width;
-    uint32_t height;
-    uint32_t num_glyphs;
-    uint8_t* glyphs;
-    bool     left_col_first;
-} Bitmap_Font;
+const uint32_t text_fg_color = ARGB_RED;
+const uint32_t text_bg_color = ARGB_DARKGRAY;
 
 void print_string(char* string, Bitmap_Font* font);
 

@@ -50,4 +50,3 @@ $(TARGET): $(SOURCE)
 
 clean:
 	rm -rf $(TARGET)
-
