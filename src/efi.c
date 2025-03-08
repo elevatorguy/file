@@ -105,7 +105,7 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
 	VOID* psf_font = 0;
 
 	// Try to load font from ESP first (if present, a data partition font becomes secondary)
-    CHAR16* font_file = u"\\EFI\\C\\TER-132N.PSF";
+    CHAR16* font_file = u"\\EFI\\BOOT\\TER-132N.PSF";
     psf_font = read_esp_file_to_buffer(font_file, &psf_size);
     char* psf_name = "ter-132n.psf";
     if (!psf_font) {
