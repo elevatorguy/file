@@ -248,10 +248,68 @@ void line_feed(Bitmap_Font *font) {
     }
 }
 
+void print_string_portrait(char* string, Bitmap_Font* font) {
+    uint32_t glyph_size = ((font->width + 7) / 8) * font->height;   // Size of all glyph lines
+    uint32_t glyph_width_bytes = (font->width + 7) / 8;             // Size of 1 line of a glyph
+    for (char c = *string++; c != '\0'; c = *string++) {
+        if (c == '\r') { x = 0; continue; }             // Carriage return (CR)
+        if (c == '\n') { line_feed(font); continue; }   // Line Feed (LF)
+
+        uint8_t *glyph = &font->glyphs[c * glyph_size];
+
+        // Draw each line of glyph
+        for (uint32_t i = 0; i < font->height; i++) {
+            // e.g. for glyph 'F':
+            // Left to right 1 bits:      Right to left 1 bits:
+            // mask starts here ------v   mask starts here ------v
+            // data starts here ->11111   data starts here ->11111
+            //                    1                              1
+            //                    111                          111
+            //                    1                              1
+            //                    1                              1
+            // The bitmask starts at the font width and goes down to 0, which ends up
+            //   drawing the bits mirrored from how they are stored in memory.
+            //   We want to byteswap the bits if it is already stored left to right, so that
+            //   drawing it mirrored will be left to right visually, not right to left.
+            // NOTE: This only works for fonts <= 64 pixels in width, and assumes font data
+            //    is padded with 0s to not overflow, if last line of character data is less than 8 bytes.
+            uint64_t mask = 1 << (font->width-1);
+            uint64_t bytes = font->left_col_first ?
+                             ((uint64_t)glyph[0] << 56) | // Byteswap character data; can
+                             ((uint64_t)glyph[1] << 48) | //   also use __builtin_bswap64(*(uint64_t *)glyph)
+                             ((uint64_t)glyph[2] << 40) |
+                             ((uint64_t)glyph[3] << 32) |
+                             ((uint64_t)glyph[4] << 24) |
+                             ((uint64_t)glyph[5] << 16) |
+                             ((uint64_t)glyph[6] <<  8) |
+                             ((uint64_t)glyph[7] <<  0)
+                             : *(uint64_t *)glyph;   // Else pixels are stored right to left
+            for (uint32_t px = 0; px < font->width; px++) {
+                fb[y*xres + x] = bytes & mask ? text_fg_color : text_bg_color;
+                mask >>= 1;
+                x++;            // Next pixel of character
+            }
+            y++;                // Next line of character
+            x -= font->width;   // Back up to start of character
+            glyph += glyph_width_bytes;
+        }
+
+        // Go to start of next character, top left pixel
+        y -= font->height;
+        if (x + font->width < xres - font->width) x += font->width;
+        else {
+            // Wrap text to next line with a CR/LF
+            x = 0;
+            line_feed(font);
+        }
+    }
+
+}
+
 // ===========================================================
 // Print a bitmapped font string to the screen (framebuffer)
 // ===========================================================
-void print_string(char *string, Bitmap_Font *font) {
+void print_string_landscape(char *string, Bitmap_Font *font) {
     uint32_t glyph_size = ((font->width + 7) / 8) * font->height;   // Size of all glyph lines
     uint32_t glyph_width_bytes = (font->width + 7) / 8;             // Size of 1 line of a glyph
     for (char c = *string++; c != '\0'; c = *string++) {
