@@ -34,7 +34,7 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
 
     // Set text to yellow fg/ green bg
     SystemTable->ConOut->SetAttribute(SystemTable->ConOut,
-            EFI_TEXT_ATTR(EFI_WHITE,EFI_BLACK));
+            EFI_TEXT_ATTR(EFI_YELLOW,EFI_BLUE));
 
     // Clear screen to bg color
     SystemTable->ConOut->ClearScreen(SystemTable->ConOut);
@@ -53,25 +53,24 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
     SystemTable->ConOut->OutputString(SystemTable->ConOut, u"from OutputString again.\r\n");
     //printf_c16(u"from printf again.\r\n");
 
-    // Allocate buffer for kernel bitmap fonts
     info.num_fonts = 2;
     status = SystemTable->BootServices->AllocatePool(EfiLoaderData,
                               info.num_fonts * sizeof *info.fonts,
                               (VOID **)&info.fonts);
     if (EFI_ERROR(status)) {
-        error(status, u"Could not allocate buffer for kernel bitmap font parms.\r\n");
+        error(status, u"Could not allocate buffer for font info.\r\n");
         goto cleanup;
     }
 
     SystemTable->ConOut->OutputString(SystemTable->ConOut, u"3\r\n");
 
-    // Get simple font info & glyphs from HII database for kernel to use as a bitmap font
-    //   for printing
+    // Get simple font info & glyphs from HII database to use as a bitmap font for printing
     pkg_list = hii_database_package_list(EFI_HII_PACKAGE_SIMPLE_FONTS);
     if (pkg_list) {
-        // Fill in kernel parm font with narrow glyph info from EFI HII simple font (8x19)
         EFI_HII_SIMPLE_FONT_PACKAGE_HDR *simple_font_hdr =
           (EFI_HII_SIMPLE_FONT_PACKAGE_HDR *)(pkg_list + 1);
+
+        SystemTable->ConOut->OutputString(SystemTable->ConOut, u"3-1\r\n");
 
         // Fill out bitmap font info
         info.fonts[0] = (Bitmap_Font){
@@ -83,31 +82,46 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
             .left_col_first = false,    // Bits in memory are laid out right to left
         };
 
+        SystemTable->ConOut->OutputString(SystemTable->ConOut, u"3-2\r\n");
+
         // Allocate buffer for glyph data, try to have at least full ASCII + code page range
         UINTN max_glyphs = max(256, simple_font_hdr->NumberOfNarrowGlyphs);
         Bitmap_Font font = info.fonts[0];
         UINTN glyph_size = ((font.width + 7) / 8) * font.height;
 
-        // Allocate extra 8 bytes for bitmap mask printing in kernel
+        SystemTable->ConOut->OutputString(SystemTable->ConOut, u"3-3\r\n");
+
+        // Allocate extra 8 bytes for bitmap mask printing
         status = SystemTable->BootServices->AllocatePool(EfiLoaderData,
                                   (max_glyphs * glyph_size) + 8,
                                   (VOID **)&info.fonts[0].glyphs);
         if (EFI_ERROR(status)) {
-            error(status, u"Could not allocate buffer for kernel parm font narrow glyphs bitmaps.\r\n");
+            SystemTable->ConOut->OutputString(SystemTable->ConOut, u"Could not allocate buffer for font narrow glyphs bitmaps.\r\n");
+            //error(status, u"Could not allocate buffer for font narrow glyphs bitmaps.\r\n");
             goto cleanup;
         }
+
+        SystemTable->ConOut->OutputString(SystemTable->ConOut, u"3-4\r\n");
 
         // Copy narrow glyphs into buffer, start at lowest/first glyph to 0-init or skip others
         memset(info.fonts[0].glyphs, 0, max_glyphs * glyph_size);
 
+        SystemTable->ConOut->OutputString(SystemTable->ConOut, u"3-5\r\n");
+
         EFI_NARROW_GLYPH *narrow_glyphs = (EFI_NARROW_GLYPH *)(simple_font_hdr + 1);
         CHAR16 lowest_glyph = narrow_glyphs[0].UnicodeWeight;
+
+        SystemTable->ConOut->OutputString(SystemTable->ConOut, u"3-6\r\n");
 
         UINT8* buf = info.fonts[0].glyphs + (lowest_glyph * glyph_size);
         for (UINTN i = 0; i < simple_font_hdr->NumberOfNarrowGlyphs; i++) {
             EFI_NARROW_GLYPH glyph = narrow_glyphs[i];
+            SystemTable->ConOut->OutputString(SystemTable->ConOut, u"loop - memcpy\r\n");
             memcpy(buf + (i * glyph_size), glyph.GlyphCol1, glyph_size);
         }
+    }
+    else {
+        SystemTable->ConOut->OutputString(SystemTable->ConOut, u"EFI_HII_PACKAGE_SIMPLE_FONTS list header NULL (or empty?)\r\n");
     }
 
     SystemTable->ConOut->OutputString(SystemTable->ConOut, u"4\r\n");
