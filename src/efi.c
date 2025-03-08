@@ -27,16 +27,20 @@ typedef struct {
     Bitmap_Font* fonts;
 } Font_Info;
 
-// EFI Image Entry Point
 EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     (void)ImageHandle;	// Prevent compiler warning
 
-    // Set text to yellow fg/ green bg
-    SystemTable->ConOut->SetAttribute(SystemTable->ConOut, 
-            EFI_TEXT_ATTR(EFI_YELLOW,EFI_GREEN)); 
+    SystemTable->BootServices->SetWatchdogTimer(0, 0x10000, 0, NULL);
 
-    // Clear screen to bg color 
+    // Set text to yellow fg/ green bg
+    SystemTable->ConOut->SetAttribute(SystemTable->ConOut,
+            EFI_TEXT_ATTR(EFI_WHITE,EFI_BLACK));
+
+    // Clear screen to bg color
     SystemTable->ConOut->ClearScreen(SystemTable->ConOut);
+
+    SystemTable->ConOut->OutputString(SystemTable->ConOut, u"from OutputString.\r\n");
+    //printf_c16(u"from printf.\r\n");
 
     EFI_HII_PACKAGE_LIST_HEADER* pkg_list = NULL;
     EFI_STATUS status = EFI_SUCCESS;
@@ -46,22 +50,29 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
         .fonts                = NULL,
     };
 
+    SystemTable->ConOut->OutputString(SystemTable->ConOut, u"from OutputString again.\r\n");
+    //printf_c16(u"from printf again.\r\n");
+
     // Allocate buffer for kernel bitmap fonts
     info.num_fonts = 2;
-    status = SystemTable->BootServices->AllocatePool(EfiLoaderData, 
-                              info.num_fonts * sizeof *info.fonts, 
+    status = SystemTable->BootServices->AllocatePool(EfiLoaderData,
+                              info.num_fonts * sizeof *info.fonts,
                               (VOID **)&info.fonts);
     if (EFI_ERROR(status)) {
         error(status, u"Could not allocate buffer for kernel bitmap font parms.\r\n");
         goto cleanup;
     }
+    else {
+        //TODO: print to screen - debugging (crashes at runtime)
+        printf_c16(u"Allocated %d bytes.\r\n",info.num_fonts * sizeof * info.fonts);
+    }
 
-    // Get simple font info & glyphs from HII database for kernel to use as a bitmap font 
+    // Get simple font info & glyphs from HII database for kernel to use as a bitmap font
     //   for printing
-    pkg_list = hii_database_package_list(EFI_HII_PACKAGE_SIMPLE_FONTS);    
+    pkg_list = hii_database_package_list(EFI_HII_PACKAGE_SIMPLE_FONTS);
     if (pkg_list) {
         // Fill in kernel parm font with narrow glyph info from EFI HII simple font (8x19)
-        EFI_HII_SIMPLE_FONT_PACKAGE_HDR *simple_font_hdr = 
+        EFI_HII_SIMPLE_FONT_PACKAGE_HDR *simple_font_hdr =
           (EFI_HII_SIMPLE_FONT_PACKAGE_HDR *)(pkg_list + 1);
 
         // Fill out bitmap font info
@@ -77,11 +88,11 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
         // Allocate buffer for glyph data, try to have at least full ASCII + code page range
         UINTN max_glyphs = max(256, simple_font_hdr->NumberOfNarrowGlyphs);
         Bitmap_Font font = info.fonts[0];
-        UINTN glyph_size = ((font.width + 7) / 8) * font.height; 
+        UINTN glyph_size = ((font.width + 7) / 8) * font.height;
 
         // Allocate extra 8 bytes for bitmap mask printing in kernel
-        status = SystemTable->BootServices->AllocatePool(EfiLoaderData, 
-                                  (max_glyphs * glyph_size) + 8,    
+        status = SystemTable->BootServices->AllocatePool(EfiLoaderData,
+                                  (max_glyphs * glyph_size) + 8,
                                   (VOID **)&info.fonts[0].glyphs);
         if (EFI_ERROR(status)) {
             error(status, u"Could not allocate buffer for kernel parm font narrow glyphs bitmaps.\r\n");
@@ -154,8 +165,8 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
 
     // Clear screen to solid color
     UINTN color = ARGB_BLUE;
-    for (y = 0; y < yres; y++) 
-        for (x = 0; x < xres; x++) 
+    for (y = 0; y < yres; y++)
+        for (x = 0; x < xres; x++)
             fb[y*xres + x] = color;
 
     // Print test string(s)
@@ -192,19 +203,19 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
 
         SystemTable->BootServices->FreePool(info.fonts);   // Free memory for font(s) array info
     }
-    
-    // Set text to red fg/ black bg 
-    SystemTable->ConOut->SetAttribute(SystemTable->ConOut, 
+
+    // Set text to red fg/ black bg
+    SystemTable->ConOut->SetAttribute(SystemTable->ConOut,
             EFI_TEXT_ATTR(EFI_RED,EFI_BLACK));
 
-    SystemTable->ConOut->OutputString(SystemTable->ConOut, 
-            u"Press any key to shutdown..."); 
+    SystemTable->ConOut->OutputString(SystemTable->ConOut,
+            u"Press any key to shutdown...");
 
     // Wait until keypress, then return
     EFI_INPUT_KEY key;
     while (SystemTable->ConIn->ReadKeyStroke(SystemTable->ConIn, &key) != EFI_SUCCESS)
         ;
-    
+
     // Shutdown, does not return
     SystemTable->RuntimeServices->ResetSystem(EfiResetShutdown, EFI_SUCCESS, 0, NULL);
 
@@ -217,7 +228,7 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
 // ======================================================================
 void line_feed(Bitmap_Font *font) {
     // Can we draw another line of characters below current line?
-    if (y + font->height < yres - font->height) y += font->height; // Yes, go down 1 line 
+    if (y + font->height < yres - font->height) y += font->height; // Yes, go down 1 line
     else {
         // No more room, move all lines on screen 1 row up by overwriting 1st line with lines 2+
         // NOTE: This is probably slow due to reading and writing to framebuffer
@@ -225,11 +236,11 @@ void line_feed(Bitmap_Font *font) {
         uint32_t char_line_bytes = char_line_px * 4;    // Assuming ARGB8888
         uint32_t char_lines      = yres / font->height;
 
-        memcpy(fb, fb + char_line_px, char_line_bytes * (char_lines-1)); 
+        memcpy(fb, fb + char_line_px, char_line_bytes * (char_lines-1));
 
-        // Blank out last row by making all pixels the background color 
-        // Get X,Y start of last character line 
-        uint32_t px = ((yres / font->height) - 1) * font->height * xres; 
+        // Blank out last row by making all pixels the background color
+        // Get X,Y start of last character line
+        uint32_t px = ((yres / font->height) - 1) * font->height * xres;
         for (uint32_t i = 0; i < char_line_px; i++)
             fb[px++] = text_bg_color;
     }
@@ -243,7 +254,7 @@ void print_string(char *string, Bitmap_Font *font) {
     uint32_t glyph_width_bytes = (font->width + 7) / 8;             // Size of 1 line of a glyph
     for (char c = *string++; c != '\0'; c = *string++) {
         if (c == '\r') { x = 0; continue; }             // Carriage return (CR)
-        if (c == '\n') { line_feed(font); continue; }   // Line Feed (LF) 
+        if (c == '\n') { line_feed(font); continue; }   // Line Feed (LF)
 
         uint8_t *glyph = &font->glyphs[c * glyph_size];
 
@@ -257,22 +268,22 @@ void print_string(char *string, Bitmap_Font *font) {
             //                    111                          111
             //                    1                              1
             //                    1                              1
-            // The bitmask starts at the font width and goes down to 0, which ends up 
+            // The bitmask starts at the font width and goes down to 0, which ends up
             //   drawing the bits mirrored from how they are stored in memory.
-            //   We want to byteswap the bits if it is already stored left to right, so that 
+            //   We want to byteswap the bits if it is already stored left to right, so that
             //   drawing it mirrored will be left to right visually, not right to left.
             // NOTE: This only works for fonts <= 64 pixels in width, and assumes font data
             //    is padded with 0s to not overflow, if last line of character data is less than 8 bytes.
             uint64_t mask = 1 << (font->width-1);
-            uint64_t bytes = font->left_col_first ? 
-                             ((uint64_t)glyph[0] << 56) | // Byteswap character data; can 
+            uint64_t bytes = font->left_col_first ?
+                             ((uint64_t)glyph[0] << 56) | // Byteswap character data; can
                              ((uint64_t)glyph[1] << 48) | //   also use __builtin_bswap64(*(uint64_t *)glyph)
-                             ((uint64_t)glyph[2] << 40) | 
+                             ((uint64_t)glyph[2] << 40) |
                              ((uint64_t)glyph[3] << 32) |
                              ((uint64_t)glyph[4] << 24) |
-                             ((uint64_t)glyph[5] << 16) | 
+                             ((uint64_t)glyph[5] << 16) |
                              ((uint64_t)glyph[6] <<  8) |
-                             ((uint64_t)glyph[7] <<  0) 
+                             ((uint64_t)glyph[7] <<  0)
                              : *(uint64_t *)glyph;   // Else pixels are stored right to left
             for (uint32_t px = 0; px < font->width; px++) {
                 fb[y*xres + x] = bytes & mask ? text_fg_color : text_bg_color;
@@ -280,13 +291,13 @@ void print_string(char *string, Bitmap_Font *font) {
                 x++;            // Next pixel of character
             }
             y++;                // Next line of character
-            x -= font->width;   // Back up to start of character 
+            x -= font->width;   // Back up to start of character
             glyph += glyph_width_bytes;
         }
 
         // Go to start of next character, top left pixel
-        y -= font->height;      
-        if (x + font->width < xres - font->width) x += font->width; 
+        y -= font->height;
+        if (x + font->width < xres - font->width) x += font->width;
         else {
             // Wrap text to next line with a CR/LF
             x = 0;
