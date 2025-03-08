@@ -42,7 +42,6 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
     SystemTable->ConOut->OutputString(SystemTable->ConOut, u"from OutputString.\r\n");
     //printf_c16(u"from printf.\r\n");
 
-    EFI_HII_PACKAGE_LIST_HEADER* pkg_list = NULL;
     EFI_STATUS status = EFI_SUCCESS;
 
     Font_Info info = {
@@ -53,7 +52,7 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
     SystemTable->ConOut->OutputString(SystemTable->ConOut, u"from OutputString again.\r\n");
     //printf_c16(u"from printf again.\r\n");
 
-    info.num_fonts = 2;
+    info.num_fonts = 1;
     status = SystemTable->BootServices->AllocatePool(EfiLoaderData,
                               info.num_fonts * sizeof *info.fonts,
                               (VOID **)&info.fonts);
@@ -82,7 +81,7 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
 
     if (psf_font) {
         PSF2_Header *psf2_hdr = psf_font;
-        info.fonts[1] = (Bitmap_Font){
+        info.fonts[0] = (Bitmap_Font){
             .name            = psf_name,
             .width           = psf2_hdr->width,
             .height          = psf2_hdr->height,
@@ -129,13 +128,9 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
 
     // Print test string(s)
     x = y = 0;
-    Bitmap_Font* font1 = &info.fonts[0];
-    Bitmap_Font* font2 = &info.fonts[1];
-    print_string("Hello, bitmap font world!", font1);
-    print_string("\r\nFont 1 Name: ", font1);
-    print_string(font1->name, font1);
-    print_string("\r\nFont 2 Name: ", font2);
-    print_string(font2->name, font2);
+    Bitmap_Font* font = &info.fonts[0];
+    print_string("\r\nFont Name: ", font);
+    print_string(font->name, font);
 
     SystemTable->ConOut->OutputString(SystemTable->ConOut, u"8\r\n");
 
@@ -154,8 +149,6 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
 
     if (psf_font) SystemTable->BootServices->FreePool(psf_font); // Free memory for data partition file
     cleanup:
-    if (pkg_list) SystemTable->BootServices->FreePool(pkg_list); // Free memory for simple font package list
-
     if (info.fonts) {
         // Free memory for font glyph(s) info
         for (UINTN i = 0; i < info.num_fonts; i++)
