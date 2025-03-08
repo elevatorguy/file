@@ -1,4 +1,6 @@
 #include "efi.h"
+#include "efi_lib.h"
+#include "arch/x86_64/x86_64.h"
 
 // PSF Font types
 // Adapted from https://wiki.osdev.org/PC_Screen_Font
