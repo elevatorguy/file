@@ -32,6 +32,8 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
 
     SystemTable->BootServices->SetWatchdogTimer(0, 0x10000, 0, NULL);
 
+    init_global_variables(ImageHandle, SystemTable);
+
     // Set text to yellow fg/ green bg
     SystemTable->ConOut->SetAttribute(SystemTable->ConOut,
             EFI_TEXT_ATTR(EFI_WHITE,EFI_BLACK));
