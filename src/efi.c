@@ -62,10 +62,8 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
         error(status, u"Could not allocate buffer for kernel bitmap font parms.\r\n");
         goto cleanup;
     }
-    else {
-        //TODO: print to screen - debugging (crashes at runtime)
-        printf_c16(u"Allocated %d bytes.\r\n",info.num_fonts * sizeof * info.fonts);
-    }
+
+    SystemTable->ConOut->OutputString(SystemTable->ConOut, u"3\r\n");
 
     // Get simple font info & glyphs from HII database for kernel to use as a bitmap font
     //   for printing
@@ -112,6 +110,8 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
         }
     }
 
+    SystemTable->ConOut->OutputString(SystemTable->ConOut, u"4\r\n");
+
     UINTN psf_size = 0;
 	VOID* psf_font = 0;
 
@@ -139,6 +139,8 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
         };
     }
 
+    SystemTable->ConOut->OutputString(SystemTable->ConOut, u"5\r\n");
+
     // Get GOP protocol via LocateProtocol()
     EFI_GUID gop_guid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
     EFI_GRAPHICS_OUTPUT_PROTOCOL *gop = NULL;
@@ -155,6 +157,8 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
     	mode_index = (*(*gop).Mode).Mode;
     }
 
+    SystemTable->ConOut->OutputString(SystemTable->ConOut, u"6\r\n");
+
     gop->QueryMode(gop, mode_index, &mode_info_size, &mode_info);
 
     // Grab Framebuffer/GOP info
@@ -169,6 +173,8 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
         for (x = 0; x < xres; x++)
             fb[y*xres + x] = color;
 
+    SystemTable->ConOut->OutputString(SystemTable->ConOut, u"7\r\n");
+
     // Print test string(s)
     x = y = 0;  // Reset to 0,0 position
     Bitmap_Font* font1 = &info.fonts[0];
@@ -178,6 +184,8 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
     print_string(font1->name, font1);
     print_string("\r\nFont 2 Name: ", font2);
     print_string(font2->name, font2);
+
+    SystemTable->ConOut->OutputString(SystemTable->ConOut, u"8\r\n");
 
     // Test runtime services by waiting a few seconds and then shutting down
     EFI_TIME old_time = {0}, new_time = {0};
