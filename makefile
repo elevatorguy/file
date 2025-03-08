@@ -12,7 +12,7 @@ MACHINE ?= unknown
 DISK_IMG_PGM ::= write_gpt			# Linux
 QEMU_SCRIPT	 ::= qemu_$(ARCH).sh	# Linux
 
-DISK_IMG_FOLDER ::= ../UEFI-GPT-image-creator/
+DISK_IMG_FOLDER ::= bin
 
 # Uncomment CC/LDFLAGS for EFI object - gcc
 #EFICC       ::= $(ARCH)-w64-mingw32-gcc
@@ -52,11 +52,11 @@ CFLAGS ::= \
 # -I include for "#include <arch/ARCH/ARCH.h>" or other files under top level "include" directory
 CFLAGS += -D ARCH=$(ARCH) -D MACHINE=$(MACHINE) -I include
 
-KERNEL_SRC     ::= kernel.c
+KERNEL_SRC     ::= src/kernel.c
 KERNEL_CFLAGS  ::= $(CFLAGS) -fPIE
 KERNEL_LDFLAGS ::= -e kmain -nostdlib -pie
 
-EFISRC  ::= efi.c
+EFISRC  ::= src/efi.c
 EFIOBJ  ::= $(EFISRC:%.c=%_$(ARCH).o)
 DEPENDS ::= $(EFIOBJ:.o=.d) $(KERNEL_SRC:.c=.d)
 
@@ -79,11 +79,10 @@ FONT ::= ter-132n.psf	# PSF2 Bitmapped Font: Terminus 16x32 ISO8859-1
 # Add kernel binary to new disk image
 ADD_KERNEL = \
 	cd $(DISK_IMG_FOLDER); \
-	./$(DISK_IMG_PGM) -ae /EFI/BOOT/ ../efi_c/$(EFI_APP) \
-					  -ad ../efi_c/$(KERNEL) ../efi_c/$(FONT);
+	./$(DISK_IMG_PGM) -ae /EFI/BOOT/ ../src/$(EFI_APP) \
+					  -ad ../src/$(KERNEL) ../src/$(FONT);
 
-all: $(DISK_IMG_FOLDER)/$(DISK_IMG_PGM) $(EFI_APP) $(KERNEL) 
-	./$(QEMU_SCRIPT)
+all: $(DISK_IMG_FOLDER)/$(DISK_IMG_PGM) $(EFI_APP)
 
 $(DISK_IMG_FOLDER)/$(DISK_IMG_PGM):
 	cd $(DISK_IMG_FOLDER) && $(MAKE) 
