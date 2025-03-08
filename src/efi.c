@@ -34,7 +34,7 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
 
     // Set text to yellow fg/ green bg
     SystemTable->ConOut->SetAttribute(SystemTable->ConOut,
-            EFI_TEXT_ATTR(EFI_YELLOW,EFI_BLACK));
+            EFI_TEXT_ATTR(EFI_RED,EFI_BLACK));
 
     // Clear screen to bg color
     SystemTable->ConOut->ClearScreen(SystemTable->ConOut);
@@ -154,8 +154,6 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
 
     if (psf_font) SystemTable->BootServices->FreePool(psf_font); // Free memory for data partition file
     cleanup:
-    if (pkg_list) SystemTable->BootServices->FreePool(pkg_list); // Free memory for simple font package list
-
     if (info.fonts) {
         // Free memory for font glyph(s) info
         for (UINTN i = 0; i < info.num_fonts; i++)
