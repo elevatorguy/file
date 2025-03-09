@@ -65,7 +65,6 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
         goto cleanup;
     }
     else {
-        //TODO: print to screen - debugging (crashes at runtime)
         printf_c16(u"Allocated %d bytes.\r\n",info.num_fonts * sizeof * info.fonts);
     }
 
@@ -305,7 +304,7 @@ void print_string(char* string, Bitmap_Font* font) {
                              ((uint64_t)glyph[7] <<  0)
                              : *(uint64_t *)glyph;   // Else pixels are stored right to left
             for (uint32_t px = 0; px < font->width; px++) {
-                fb[y*xres + x] = bytes & mask ? text_fg_color : text_bg_color;
+                fb[(yres-y)*xres + x] = bytes & mask ? text_fg_color : text_bg_color;
                 mask >>= 1;
                 y++;            // Next pixel of character
             }
