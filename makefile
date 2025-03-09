@@ -2,15 +2,7 @@
 .PHONY: all clean
 
 SOURCE = src/efi.c
-TARGET = BOOTX64.EFI
-
-ifeq ($(OS), Windows_NT)
-QEMU = ./qemu.bat
-DISK_FLAGS = --vhd
-else
-QEMU = ./qemu.sh
-DISK_FLAGS =
-endif
+TARGET = FILE.EFI
 
 # Uncomment for gcc, or move to OS check above, etc.
 CC = x86_64-w64-mingw32-gcc \
@@ -34,19 +26,10 @@ CFLAGS = \
 	-nostdlib \
 	-I include
 
-DISK_IMG_FOLDER = bin
-DISK_IMG_PGM    = write_gpt
-
-all: $(DISK_IMG_FOLDER)/$(DISK_IMG_PGM) $(TARGET)
-	cd $(DISK_IMG_FOLDER)
-
-$(DISK_IMG_FOLDER)/$(DISK_IMG_PGM):
-	cd $(DISK_IMG_FOLDER) && $(MAKE)
+all: $(TARGET)
 
 $(TARGET): $(SOURCE)
 	$(CC) $(CFLAGS) -o $@ $<
-	cp $(TARGET) $(DISK_IMG_FOLDER); \
-	cd $(DISK_IMG_FOLDER) && ./$(DISK_IMG_PGM) $(DISK_FLAGS)
 
 clean:
 	rm -rf $(TARGET)

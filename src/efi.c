@@ -17,10 +17,13 @@ uint32_t yres = 0;   // Y/Vertical resolution of framebuffer
 uint32_t x = 0;      // X offset into framebuffer
 uint32_t y = 0;      // Y offset into framebuffer
 
+bool portrait = true; //portrait or landscape
+
 const uint32_t text_fg_color = ARGB_RED;
 const uint32_t text_bg_color = ARGB_DARKGRAY;
 
 void print_string(char* string, Bitmap_Font* font);
+void print_string_landscape(char* string, Bitmap_Font* font);
 
 typedef struct {
     UINTN        num_fonts;
@@ -163,11 +166,20 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
     x = y = 0;  // Reset to 0,0 position
     Bitmap_Font* font1 = &info.fonts[0];
     Bitmap_Font* font2 = &info.fonts[1];
-    print_string("Hello, bitmap font world!", font1);
-    print_string("\r\nFont 1 Name: ", font1);
-    print_string(font1->name, font1);
-    print_string("\r\nFont 2 Name: ", font2);
-    print_string(font2->name, font2);
+    if(portrait) {
+        print_string("Hello, bitmap font world!", font1);
+        print_string("\r\nFont 1 Name: ", font1);
+        print_string(font1->name, font1);
+        print_string("\r\nFont 2 Name: ", font2);
+        print_string(font2->name, font2);
+    }
+    else {
+        print_string_landscape("Hello, bitmap font world!", font1);
+        print_string_landscape("\r\nFont 1 Name: ", font1);
+        print_string_landscape(font1->name, font1);
+        print_string_landscape("\r\nFont 2 Name: ", font2);
+        print_string_landscape(font2->name, font2);
+    }
 
     // Test runtime services by waiting a few seconds and then shutting down
     EFI_TIME old_time = {0}, new_time = {0};
@@ -176,8 +188,29 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
     while (i < 10) {
         SystemTable->RuntimeServices->GetTime(&new_time, &time_cap);
         if (old_time.Second != new_time.Second) {
+            UINTN color = ARGB_BLUE;
+            for (y = 0; y < yres; y++)
+                for (x = 0; x < xres; x++)
+                    fb[y*xres + x] = color;
+            x = y = 0;
             old_time.Second = new_time.Second;
 			//print_string(itoa(new_time.Second,s,10), font1);
+            if(portrait) {
+                print_string("Hello, bitmap font world!", font1);
+                print_string("\r\nFont 1 Name: ", font1);
+                print_string(font1->name, font1);
+                print_string("\r\nFont 2 Name: ", font2);
+                print_string(font2->name, font2);
+                portrait = false;
+            }
+            else {
+                print_string_landscape("Hello, bitmap font world!", font1);
+                print_string_landscape("\r\nFont 1 Name: ", font1);
+                print_string_landscape(font1->name, font1);
+                print_string_landscape("\r\nFont 2 Name: ", font2);
+                print_string_landscape(font2->name, font2);
+                portrait = true;
+            }
             i++;
         }
     }
@@ -321,7 +354,7 @@ void print_string_landscape(char *string, Bitmap_Font *font) {
     uint32_t glyph_width_bytes = (font->width + 7) / 8;             // Size of 1 line of a glyph
     for (char c = *string++; c != '\0'; c = *string++) {
         if (c == '\r') { x = 0; continue; }             // Carriage return (CR)
-        if (c == '\n') { line_feed(font); continue; }   // Line Feed (LF)
+        if (c == '\n') { line_feed_landscape(font); continue; }   // Line Feed (LF)
 
         uint8_t *glyph = &font->glyphs[c * glyph_size];
 
@@ -368,7 +401,7 @@ void print_string_landscape(char *string, Bitmap_Font *font) {
         else {
             // Wrap text to next line with a CR/LF
             x = 0;
-            line_feed(font);
+            line_feed_landscape(font);
         }
     }
 }
