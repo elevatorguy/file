@@ -65,7 +65,6 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
         goto cleanup;
     }
     else {
-        //TODO: print to screen - debugging (crashes at runtime)
         printf_c16(u"Allocated %d bytes.\r\n",info.num_fonts * sizeof * info.fonts);
     }
 
@@ -272,7 +271,7 @@ void print_string(char* string, Bitmap_Font* font) {
     uint32_t glyph_size = ((font->width + 7) / 8) * font->height;   // Size of all glyph lines
     uint32_t glyph_width_bytes = (font->width + 7) / 8;             // Size of 1 line of a glyph
     for (char c = *string++; c != '\0'; c = *string++) {
-        if (c == '\r') { y = 0; continue; }             // Carriage return (CR)
+        if (c == '\r') { y = yres; continue; }             // Carriage return (CR)
         if (c == '\n') { line_feed(font); continue; }   // Line Feed (LF)
 
         uint8_t *glyph = &font->glyphs[c * glyph_size];
@@ -307,19 +306,19 @@ void print_string(char* string, Bitmap_Font* font) {
             for (uint32_t px = 0; px < font->width; px++) {
                 fb[y*xres + x] = bytes & mask ? text_fg_color : text_bg_color;
                 mask >>= 1;
-                y++;            // Next pixel of character
+                y--;            // Next pixel of character
             }
             x++;                // Next line of character
-            y -= font->width;   // Back up to start of character
+            y += font->width;   // Back up to start of character
             glyph += glyph_width_bytes;
         }
 
         // Go to start of next character, top left pixel
         x -= font->height;
-        if (y + font->width < yres - font->width) y += font->width;
+        if (y + font->width < 0 - font->width) y += font->width;
         else {
             // Wrap text to next line with a CR/LF
-            y = 0;
+            y = yres;
             line_feed(font);
         }
     }
