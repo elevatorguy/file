@@ -41,9 +41,6 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
     // Clear screen to bg color
     SystemTable->ConOut->ClearScreen(SystemTable->ConOut);
 
-    SystemTable->ConOut->OutputString(SystemTable->ConOut, u"from OutputString.\r\n");
-    //printf_c16(u"from printf.\r\n");
-
     EFI_HII_PACKAGE_LIST_HEADER* pkg_list = NULL;
     EFI_STATUS status = EFI_SUCCESS;
 
@@ -52,27 +49,19 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
         .fonts                = NULL,
     };
 
-    SystemTable->ConOut->OutputString(SystemTable->ConOut, u"from OutputString again.\r\n");
-    //printf_c16(u"from printf again.\r\n");
-
-    // Allocate buffer for kernel bitmap fonts
+    // Allocate buffer for bitmap fonts
     info.num_fonts = 2;
     status = SystemTable->BootServices->AllocatePool(EfiLoaderData,
                               info.num_fonts * sizeof *info.fonts,
                               (VOID **)&info.fonts);
     if (EFI_ERROR(status)) {
-        error(status, u"Could not allocate buffer for kernel bitmap font parms.\r\n");
+        error(status, u"Could not allocate buffer for bitmap font info.\r\n");
         goto cleanup;
     }
-    else {
-        printf_c16(u"Allocated %d bytes.\r\n",info.num_fonts * sizeof * info.fonts);
-    }
 
-    // Get simple font info & glyphs from HII database for kernel to use as a bitmap font
-    //   for printing
     pkg_list = hii_database_package_list(EFI_HII_PACKAGE_SIMPLE_FONTS);
     if (pkg_list) {
-        // Fill in kernel parm font with narrow glyph info from EFI HII simple font (8x19)
+        // Narrow glyph info from EFI HII simple font (8x19)
         EFI_HII_SIMPLE_FONT_PACKAGE_HDR *simple_font_hdr =
           (EFI_HII_SIMPLE_FONT_PACKAGE_HDR *)(pkg_list + 1);
 
@@ -91,12 +80,12 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
         Bitmap_Font font = info.fonts[0];
         UINTN glyph_size = ((font.width + 7) / 8) * font.height;
 
-        // Allocate extra 8 bytes for bitmap mask printing in kernel
+        // Allocate extra 8 bytes for bitmap mask printing
         status = SystemTable->BootServices->AllocatePool(EfiLoaderData,
                                   (max_glyphs * glyph_size) + 8,
                                   (VOID **)&info.fonts[0].glyphs);
         if (EFI_ERROR(status)) {
-            error(status, u"Could not allocate buffer for kernel parm font narrow glyphs bitmaps.\r\n");
+            error(status, u"Could not allocate buffer for font info narrow glyphs bitmaps.\r\n");
             goto cleanup;
         }
 
