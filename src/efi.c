@@ -185,31 +185,33 @@ EFI_STATUS EFIAPI efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable
     EFI_TIME old_time = {0}, new_time = {0};
     EFI_TIME_CAPABILITIES time_cap = {0};
     UINTN i = 0;
-    while (i < 10) {
+    while (i < 20) {
         SystemTable->RuntimeServices->GetTime(&new_time, &time_cap);
         if (old_time.Second != new_time.Second) {
-            UINTN color = ARGB_BLUE;
-            for (y = 0; y < yres; y++)
-                for (x = 0; x < xres; x++)
-                    fb[y*xres + x] = color;
-            x = y = 0;
-            old_time.Second = new_time.Second;
-			//print_string(itoa(new_time.Second,s,10), font1);
-            if(portrait) {
-                print_string("Hello, bitmap font world!", font1);
-                print_string("\r\nFont 1 Name: ", font1);
-                print_string(font1->name, font1);
-                print_string("\r\nFont 2 Name: ", font2);
-                print_string(font2->name, font2);
-                portrait = false;
-            }
-            else {
-                print_string_landscape("Hello, bitmap font world!", font1);
-                print_string_landscape("\r\nFont 1 Name: ", font1);
-                print_string_landscape(font1->name, font1);
-                print_string_landscape("\r\nFont 2 Name: ", font2);
-                print_string_landscape(font2->name, font2);
-                portrait = true;
+            if((i % 2) == 1) {
+                UINTN color = ARGB_BLUE;
+                for (y = 0; y < yres; y++)
+                    for (x = 0; x < xres; x++)
+                        fb[y*xres + x] = color;
+                x = y = 0;
+                old_time.Second = new_time.Second;
+    			//print_string(itoa(new_time.Second,s,10), font1);
+                if(portrait) {
+                    print_string("Hello, bitmap font world!", font1);
+                    print_string("\r\nFont 1 Name: ", font1);
+                    print_string(font1->name, font1);
+                    print_string("\r\nFont 2 Name: ", font2);
+                    print_string(font2->name, font2);
+                    portrait = false;
+                }
+                else {
+                    print_string_landscape("Hello, bitmap font world!", font1);
+                    print_string_landscape("\r\nFont 1 Name: ", font1);
+                    print_string_landscape(font1->name, font1);
+                    print_string_landscape("\r\nFont 2 Name: ", font2);
+                    print_string_landscape(font2->name, font2);
+                    portrait = true;
+                }
             }
             i++;
         }
