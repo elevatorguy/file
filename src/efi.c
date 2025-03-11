@@ -1360,6 +1360,8 @@ EFI_STATUS test_graphics(void) {
     EFI_GUID device = INTEL_GRAPHICS_530_GUID;
     EFI_GUID device_subsystem = INTEL_GRAPHICS_530_SUBSYSTEM_GUID;
 
+    //todo - find documentation of INTEL_GRAPHICS_530_PROTOCOL(s)
+
 	print_string("\r\nPress any key to go back...\r\n", font1);
 
     if (psf_font) bs->FreePool(psf_font);
