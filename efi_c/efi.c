@@ -799,6 +799,25 @@ EFI_STATUS test_mouse(void) {
     return EFI_SUCCESS;
 }
 
+// =====================================================
+// Test if EFI_SIMPLE_NETWORK_PROTOCOL is found or not
+// =====================================================
+EFI_STATUS test_network(void) {
+    cout->ClearScreen(cout);
+
+    EFI_GUID netGuid = EFI_SIMPLE_NETWORK_PROTOCOL_GUID;
+    EFI_SIMPLE_NETWORK_PROTOCOL* netProtocol;
+    EFI_STATUS status = bs->LocateProtocol(&netGuid, NULL, (VOID**)&netProtocol);
+    if(EFI_ERROR(status)) {
+        printf_c16(u"ERROR: Network protocol(s) not found.\r\n");
+    }
+    else {
+        printf_c16(u"Network protocol(s) found.\r\n");
+    }
+    get_key();
+    return status;
+}
+
 // ===========================================================
 // Timer function to print current date/time every 1 second
 // ===========================================================
@@ -2228,7 +2247,7 @@ EFI_STATUS write_to_another_disk(void) {
     }
 
     // Get size of disk image from file 
-    CHAR16 *file_name = u"\\EFI\\BOOT\\DSKIMG.INF";
+    CHAR16 *file_name = u"\\EFI\\BOOT\\FILE.TXT";
     UINTN buf_size = 0;
     VOID *file_buffer = NULL;
     file_buffer = read_esp_file_to_buffer(file_name, &buf_size);
@@ -2239,7 +2258,7 @@ EFI_STATUS write_to_another_disk(void) {
 
     char *str_pos = strstr(file_buffer, "DISK_SIZE=");
     if (!str_pos) {
-        error(0, u"Could not find disk image size in DSKIMG.INF\r\n");
+        error(0, u"Could not find disk image size in FILE.TXT\r\n");
         return 1;
     }
 
@@ -2442,6 +2461,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
         u"Set Text Mode",
         u"Set Graphics Mode",
         u"Test Mouse",
+        u"Test Network",
         u"Read ESP Files",
         u"Print Block IO Partitions",
         u"Print Memory Map",
@@ -2459,6 +2479,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
         set_text_mode,
         set_graphics_mode,
         test_mouse,
+        test_network,
         read_esp_files,
         print_block_io_partitions,
         print_memory_map,
