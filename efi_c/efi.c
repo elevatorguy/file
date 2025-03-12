@@ -818,6 +818,17 @@ EFI_STATUS test_network(void) {
     return status;
 }
 
+EFI_STATUS calculator(void) {
+    cout->ClearScreen(cout);
+
+    EFI_STATUS status = EFI_SUCCESS;
+
+    printf_c16(u"ERROR: calculator not implmented yet.");
+
+    get_key();
+    return status;
+}
+
 // ===========================================================
 // Timer function to print current date/time every 1 second
 // ===========================================================
@@ -2472,6 +2483,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
         u"Change Boot Variables",
         u"Write Disk Image Image To Other Disk",
         u"Install Bootloader & Autoload Kernel",
+        u"Calculator",
     };
 
     // Functions to call for each menu option
@@ -2489,7 +2501,8 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
         load_kernel,
         change_boot_variables,
         write_to_another_disk,
-        install_to_disk
+        install_to_disk,
+        calculator
     };
 
     // Connect all controllers found for all handles, to hopefully fix
