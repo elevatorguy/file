@@ -837,44 +837,69 @@ EFI_STATUS test_network(void) {
             netProtocol->Mode->MediaPresentSupported,
             netProtocol->Mode->MediaPresent
             );
-        EFI_NETWORK_STATISTICS* netStat;
-        status = netProtocol->Statistics(netProtocol, false, NULL, netStat);
-        if(status == EFI_SUCCESS && netStat != 0) {
+
+        get_key();
+
+        EFI_NETWORK_STATISTICS netStat;
+        UINTN netStat_size = sizeof netStat;
+        status = netProtocol->Statistics(netProtocol, false, &netStat_size, &netStat);
+        if(status == EFI_SUCCESS) {
             printf_c16(u"Statistics:\r\n"
-            u"  RxTotalFrames: %llx,\r\n  RxGoodFrames: %llx,\r\n  RxUndersizeFrames: %llx,\r\n  RxOversizeFrames: %llx,\r\n"
-            u"  RxDroppedFrames: %llx,\r\n  RxUnicastFrames: %llx,\r\n  RxBroadcastFrames: %llx\r\n, RxMulticastFrames: %llx,\r\n"
-            u"  RxCrcErrorFrames: %llx,\r\n  RxTotalBytes: %llx,\r\n"
-            u"  TxTotalFrames: %llx,\r\n  TxGoodFrames: %llx,\r\n  TxUndersizeFrames: %llx,\r\n  TxOversizeFrames: %llx,\r\n"
-            u"  TxDroppedFrames: %llx,\r\n  TxUnicastFrames: %llx,\r\n  TxBroadcastFrames: %llx\r\n, TxMulticastFrames: %llx,\r\n"
-            u"  TxCrcErrorFrames: %llx,\r\n  TxTotalBytes: %llx,\r\n"
-            u"  Collisions: %llx,\r\n  UnsupportedProtocol: %llx,\r\n  RxDuplicatedFrames: %llx\r\n, RxDecryptErrorFrames: %llx,\r\n"
-            u"  TxErrorFrames: %llx,\r\n  TxRetryFrames: %llx\r\n",
-            netStat->RxTotalFrames,
-            netStat->RxGoodFrames,
-            netStat->RxUndersizeFrames,
-            netStat->RxOversizeFrames,
-            netStat->RxDroppedFrames,
-            netStat->RxUnicastFrames,
-            netStat->RxBroadcastFrames,
-            netStat->RxMulticastFrames,
-            netStat->RxCrcErrorFrames,
-            netStat->RxTotalBytes,
-            netStat->TxTotalFrames,
-            netStat->TxGoodFrames,
-            netStat->TxUndersizeFrames,
-            netStat->TxOversizeFrames,
-            netStat->TxDroppedFrames,
-            netStat->TxUnicastFrames,
-            netStat->TxBroadcastFrames,
-            netStat->TxMulticastFrames,
-            netStat->TxCrcErrorFrames,
-            netStat->TxTotalBytes,
-            netStat->Collisions,
-            netStat->UnsupportedProtocol,
-            netStat->RxDuplicatedFrames,
-            netStat->RxDecryptErrorFrames,
-            netStat->TxErrorFrames,
-            netStat->TxRetryFrames);
+            u"  RxTotalFrames: %llx,\r\n"
+            u"  RxGoodFrames: %llx,\r\n"
+            u"  RxUndersizeFrames: %llx,\r\n"
+            u"  RxOversizeFrames: %llx,\r\n"
+            u"  RxDroppedFrames: %llx,\r\n"
+            u"  RxUnicastFrames: %llx,\r\n"
+            u"  RxBroadcastFrames: %llx,\r\n"
+            u"  RxMulticastFrames: %llx,\r\n"
+            u"  RxCrcErrorFrames: %llx,\r\n"
+            u"  RxTotalBytes: %llx,\r\n"
+            u"  TxTotalFrames: %llx,\r\n"
+            u"  TxGoodFrames: %llx,\r\n"
+            u"  TxUndersizeFrames: %llx,\r\n"
+            u"  TxOversizeFrames: %llx,\r\n"
+            u"  TxDroppedFrames: %llx,\r\n"
+            u"  TxUnicastFrames: %llx,\r\n"
+            u"  TxBroadcastFrames: %llx,\r\n"
+            u"  TxMulticastFrames: %llx,\r\n"
+            u"  TxCrcErrorFrames: %llx,\r\n"
+            u"  TxTotalBytes: %llx,\r\n"
+            u"  Collisions: %llx,\r\n"
+            u"  UnsupportedProtocol: %llx,\r\n"
+            u"  RxDuplicatedFrames: %llx,\r\n"
+            u"  RxDecryptErrorFrames: %llx,\r\n"
+            u"  TxErrorFrames: %llx,\r\n"
+            u"  TxRetryFrames: %llx\r\n",
+            netStat.RxTotalFrames,
+            netStat.RxGoodFrames,
+            netStat.RxUndersizeFrames,
+            netStat.RxOversizeFrames,
+            netStat.RxDroppedFrames,
+            netStat.RxUnicastFrames,
+            netStat.RxBroadcastFrames,
+            netStat.RxMulticastFrames,
+            netStat.RxCrcErrorFrames,
+            netStat.RxTotalBytes,
+            netStat.TxTotalFrames,
+            netStat.TxGoodFrames,
+            netStat.TxUndersizeFrames,
+            netStat.TxOversizeFrames,
+            netStat.TxDroppedFrames,
+            netStat.TxUnicastFrames,
+            netStat.TxBroadcastFrames,
+            netStat.TxMulticastFrames,
+            netStat.TxCrcErrorFrames,
+            netStat.TxTotalBytes,
+            netStat.Collisions,
+            netStat.UnsupportedProtocol,
+            netStat.RxDuplicatedFrames,
+            netStat.RxDecryptErrorFrames,
+            netStat.TxErrorFrames,
+            netStat.TxRetryFrames);
+        }
+        else {
+            error(status, u"of netProtocol->Statistics\r\n");
         }
     }
     get_key();
