@@ -805,6 +805,8 @@ EFI_STATUS test_mouse(void) {
 EFI_STATUS test_network(void) {
     cout->ClearScreen(cout);
 
+    static bool first = true;
+
     EFI_GUID netGuid = EFI_SIMPLE_NETWORK_PROTOCOL_GUID;
     EFI_SIMPLE_NETWORK_PROTOCOL* netProtocol;
     EFI_STATUS status = bs->LocateProtocol(&netGuid, NULL, (VOID**)&netProtocol);
@@ -838,12 +840,22 @@ EFI_STATUS test_network(void) {
             netProtocol->Mode->MediaPresent
             );
 
-        status = netProtocol->Start(netProtocol);
-        if(status == EFI_SUCCESS) {
-            printf_c16(u"Success of netProtocol->Start\r\n");
-        }
-        else {
-            error(status, u"of netProtocol->Start\r\n");
+        if(!first) {
+            status = netProtocol->Start(netProtocol);
+            if(status == EFI_SUCCESS) {
+                printf_c16(u"Success of netProtocol->Start\r\n");
+            }
+            else {
+                error(status, u"of netProtocol->Start\r\n");
+            }
+
+            status = netProtocol->Initialize(netProtocol, 0, 0);
+            if(status == EFI_SUCCESS) {
+                printf_c16(u"Success of netProtocol->Initialize\r\n");
+            }
+            else {
+                error(status, u"of netProtocol->Initialize\r\n");
+            }
         }
 
         status = netProtocol->Reset(netProtocol, true);
@@ -945,6 +957,9 @@ EFI_STATUS test_network(void) {
           if HTTP,  see 29.6 (pp. 1384 to pp. 1404 in UEFI Spec 2.11 - EFI HTTP Protocols)
           if REST,  see 29.7 (pp. 1404 to pp. 1438 in UEFI Spec 2.11 - EFI REST Support Overview)
         */
+        if(first == true) {
+            first = false;
+        }
     }
     get_key();
     return status;
