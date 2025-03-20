@@ -838,21 +838,12 @@ EFI_STATUS test_network(void) {
             netProtocol->Mode->MediaPresent
             );
 
-        status = netProtocol->Start(netProtocol);
+        status = netProtocol->Reset(netProtocol, true);
         if(status == EFI_SUCCESS) {
-        printf_c16(u"Success of netProtocol->Start\r\n");
+            printf_c16(u"Success of netProtocol->Reset\r\n");
         }
         else {
-            error(status, u"of netProtocol->Start\r\n");
-        }
-
-        status = netProtocol->Initialize(netProtocol, NULL, NULL);
-        if(status == EFI_SUCCESS) {
-            printf_c16(u"Success of netProtocol->Initialize\r\n");
-            get_key();
-        }
-        else {
-            error(status, u"of netProtocol->Initialize\r\n");
+            error(status, u"of netProtocol->Reset\r\n");
         }
 
         EFI_NETWORK_STATISTICS netStat;
@@ -916,7 +907,6 @@ EFI_STATUS test_network(void) {
         else {
             error(status, u"of netProtocol->Statistics\r\n");
         }
-        //status = netProtocol->GetStatus()
 
         /*
           Beyond EFI_SIMPLE_NETWORK_PROTOCOL:
