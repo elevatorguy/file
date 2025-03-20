@@ -838,7 +838,14 @@ EFI_STATUS test_network(void) {
             netProtocol->Mode->MediaPresent
             );
 
-        get_key();
+        status = netProtocol->Initialize(netProtocol, NULL, NULL);
+        if(status == EFI_SUCCESS) {
+            printf_c16(u"Success of netProtocol->Initialize\r\n");
+            get_key();
+        }
+        else {
+            error(status, u"Failure of netProtocol->Initialize\r\n");
+        }
 
         EFI_NETWORK_STATISTICS netStat;
         UINTN netStat_size = sizeof netStat;
@@ -901,6 +908,23 @@ EFI_STATUS test_network(void) {
         else {
             error(status, u"of netProtocol->Statistics\r\n");
         }
+
+        //status = netProtocol->GetStatus()
+
+        /*
+          Beyond EFI_SIMPLE_NETWORK_PROTOCOL:
+          if ARP,   see 29.1 (pp. 1310 to pp. 1320 in UEFI Spec 2.11 - ARP Protocol)
+          if TCP,   see 28.1 (pp. 1169 to pp. 1190 in UEFI Spec 2.11 - EFI TCPv4 Protocol)
+          if DHCP,  see 29.2 (pp. 1320 to pp. 1339 in UEFI Spec 2.11 - EFI DHCPv4 Protocol)
+          if UDP,   see 30.1 (pp. 1439 to pp. 1454 in UEFI Spec 2.11 - EFI UDP Protocol)
+             IP,    see 28.3 (pp. 1209 to pp. 1233 in UEFI Spec 2.11 - EFI IPv4 Protocol)
+          if IPsec, see 28.7 (pp. 1263 to pp. 1283 in UEFI Spec 2.11 - IPsec)
+          if TLS,   see 28.9 (pp. 1296 to pp. 1309 in UEFI Spec 2.11 - EFI TLS Protocols)
+          if DNS,   see 29.4 (pp. 1358 to pp. 1370 in UEFI Spec 2.11 - EFI DNSv4 Protocol)
+          if FTP,   see 28.8 (pp. 1284 to pp. 1296 in UEFI Spec 2.11 - EFI FTP Protocol)
+          if HTTP,  see 29.6 (pp. 1384 to pp. 1404 in UEFI Spec 2.11 - EFI HTTP Protocols)
+          if REST,  see 29.7 (pp. 1404 to pp. 1438 in UEFI Spec 2.11 - EFI REST Support Overview)
+        */
     }
     get_key();
     return status;
