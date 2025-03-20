@@ -838,6 +838,14 @@ EFI_STATUS test_network(void) {
             netProtocol->Mode->MediaPresent
             );
 
+        status = netProtocol->Start(netProtocol);
+        if(status == EFI_SUCCESS) {
+            printf_c16(u"Success of netProtocol->Start\r\n");
+        }
+        else {
+            error(status, u"of netProtocol->Start\r\n");
+        }
+
         status = netProtocol->Reset(netProtocol, true);
         if(status == EFI_SUCCESS) {
             printf_c16(u"Success of netProtocol->Reset\r\n");
