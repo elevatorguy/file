@@ -799,9 +799,9 @@ EFI_STATUS test_mouse(void) {
     return EFI_SUCCESS;
 }
 
-// =====================================================
-// Test if EFI_SIMPLE_NETWORK_PROTOCOL is found or not
-// =====================================================
+// ==================================
+// Test EFI_SIMPLE_NETWORK_PROTOCOL
+// ==================================
 EFI_STATUS test_network(void) {
     cout->ClearScreen(cout);
 
@@ -906,6 +906,21 @@ EFI_STATUS test_network(void) {
         }
         else {
             error(status, u"of netProtocol->Statistics\r\n");
+        }
+
+        status = netProtocol->Shutdown(netProtocol);
+        if(status == EFI_SUCCESS) {
+            printf_c16(u"Success of netProtocol->Shutdown\r\n");
+        }
+        else {
+            error(status, u"of netProtocol->Shutdown\r\n");
+        }
+        status = netProtocol->Stop(netProtocol);
+        if(status == EFI_SUCCESS) {
+            printf_c16(u"Success of netProtocol->Stop\r\n");
+        }
+        else {
+            error(status, u"of netProtocol->Stop\r\n");
         }
 
         /*
