@@ -838,13 +838,21 @@ EFI_STATUS test_network(void) {
             netProtocol->Mode->MediaPresent
             );
 
+        status = netProtocol->Start(netProtocol);
+        if(status == EFI_SUCCESS) {
+        printf_c16(u"Success of netProtocol->Start\r\n");
+        }
+        else {
+            error(status, u"of netProtocol->Start\r\n");
+        }
+
         status = netProtocol->Initialize(netProtocol, NULL, NULL);
         if(status == EFI_SUCCESS) {
             printf_c16(u"Success of netProtocol->Initialize\r\n");
             get_key();
         }
         else {
-            error(status, u"Failure of netProtocol->Initialize\r\n");
+            error(status, u"of netProtocol->Initialize\r\n");
         }
 
         EFI_NETWORK_STATISTICS netStat;
@@ -908,15 +916,8 @@ EFI_STATUS test_network(void) {
         else {
             error(status, u"of netProtocol->Statistics\r\n");
         }
-
         //status = netProtocol->GetStatus()
-        status = netProtocol->Stop(netProtocol);
-        if(status == EFI_SUCCESS) {
-            printf_c16(u"Success of netProtocol->Stop\r\n");
-        }
-        else {
-            error(status, u"Failure of netProtocol->Stop\r\n");
-        }
+
         /*
           Beyond EFI_SIMPLE_NETWORK_PROTOCOL:
           if ARP,   see 29.1 (pp. 1310 to pp. 1320 in UEFI Spec 2.11 - ARP Protocol)
