@@ -1,7 +1,7 @@
 #include <stdarg.h>
 
-#include "efi.h"
-#include "efi_lib.h"
+#include "file.h"
+#include "lib.h"
 
 #define arch_header <arch/ARCH/ARCH.h>
 #include arch_header
@@ -800,7 +800,7 @@ EFI_STATUS test_mouse(void) {
 }
 
 // ==================================
-// Test EFI_SIMPLE_NETWORK_PROTOCOL
+// EFI_SIMPLE_NETWORK_PROTOCOL, etc.
 // ==================================
 EFI_STATUS test_network(void) {
     cout->ClearScreen(cout);
@@ -926,6 +926,39 @@ EFI_STATUS test_network(void) {
         }
         else {
             error(status, u"of netProtocol->Statistics\r\n");
+        }
+        EFI_TIME old_time = {0}, new_time = {0};
+        UINTN buffer_size = 1024;
+        char buffer[1024];
+        for(int i = 0; i < buffer_size; i++) {
+            buffer[i] = '\0';
+        }
+        EFI_TIME_CAPABILITIES time_cap = {0};
+        UINTN now = 0;
+        while(now < 30) {
+            rs->GetTime(&new_time, &time_cap);
+            if (old_time.Second != new_time.Second) {
+                if(new_time.Second - old_time.Second >= 0) {
+                    now = now + (new_time.Second - old_time.Second);
+                }
+                else {
+                    now = now + (60 + (new_time.Second - old_time.Second));
+                }
+                old_time.Second = new_time.Second;
+
+                status = netProtocol->Receive(netProtocol, NULL, &buffer_size, &buffer, NULL, NULL, NULL);
+                if(status == EFI_SUCCESS) {
+                    printf_c16(u"Success of netProtocol->Receive (%x)\r\n",now);
+                }
+                else {
+                    if(status == EFI_NOT_READY) {
+                        printf_c16(u"  receive buffer empty (%x)\r",now);
+                    }
+                    else {
+                        error(status, u"of netProtocol->Receive (%x)\r\n",now);
+                    }
+                }
+            }
         }
 
         status = netProtocol->Shutdown(netProtocol);

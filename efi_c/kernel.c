@@ -2,8 +2,8 @@
 #include <stdint.h>
 #include <stdnoreturn.h>
 
-#include "efi.h"
-#include "efi_lib.h"
+#include "file.h"
+#include "lib.h"
 
 #define arch_header <arch/ARCH/ARCH.h>
 #include arch_header

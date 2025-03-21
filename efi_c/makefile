@@ -68,7 +68,7 @@ KERNEL_SRC     ::= kernel.c
 KERNEL_CFLAGS  ::= $(CFLAGS) -fPIE
 KERNEL_LDFLAGS ::= -e kmain -nostdlib -pie
 
-EFISRC  ::= efi.c
+EFISRC  ::= file.c
 EFIOBJ  ::= $(EFISRC:%.c=%_$(ARCH).o)
 DEPENDS ::= $(EFIOBJ:.o=.d) $(KERNEL_SRC:.c=.d)
 
