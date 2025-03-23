@@ -930,7 +930,7 @@ EFI_STATUS test_network(void) {
         EFI_TIME old_time = {0}, new_time = {0};
         UINTN buffer_size = 1024;
         char buffer[1024];
-        for(int i = 0; i < buffer_size; i++) {
+        for(UINTN i = 0; i < buffer_size; i++) {
             buffer[i] = '\0';
         }
         EFI_TIME_CAPABILITIES time_cap = {0};
@@ -980,7 +980,6 @@ EFI_STATUS test_network(void) {
           Beyond EFI_SIMPLE_NETWORK_PROTOCOL:
           if ARP,   see 29.1 (pp. 1310 to pp. 1320 in UEFI Spec 2.11 - ARP Protocol)
           if TCP,   see 28.1 (pp. 1169 to pp. 1190 in UEFI Spec 2.11 - EFI TCPv4 Protocol)
-          if DHCP,  see 29.2 (pp. 1320 to pp. 1339 in UEFI Spec 2.11 - EFI DHCPv4 Protocol)
           if UDP,   see 30.1 (pp. 1439 to pp. 1454 in UEFI Spec 2.11 - EFI UDP Protocol)
              IP,    see 28.3 (pp. 1209 to pp. 1233 in UEFI Spec 2.11 - EFI IPv4 Protocol)
           if IPsec, see 28.7 (pp. 1263 to pp. 1283 in UEFI Spec 2.11 - IPsec)
