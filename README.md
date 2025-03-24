@@ -20,10 +20,10 @@ a dell xps 13 laptop ca. 2019.
 Supported architectures are currently only x86_64, with stubs for Aarch64.
 
 ## repo layout
-`efi_c` is the main directory; it should hold the lastest developments and is used for building 
+`main` is the branch; it should hold the lastest developments and is used for building 
 EFI applications and test kernels.
 
-`hello_efi` is a directory for what was shown in the first UEFI intro/overview video. It has a
+`hello` is a branch for what was shown in the first UEFI intro/overview video. It has a
 basic "hello world" test EFI application.
 
 ## dependencies
