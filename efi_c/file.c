@@ -927,6 +927,43 @@ EFI_STATUS test_network(void) {
         else {
             error(status, u"of netProtocol->Statistics\r\n");
         }
+
+        EFI_GUID dhcpGuid = EFI_DHCP4_SERVICE_BINDING_PROTOCOL_GUID;
+        EFI_DHCP4_PROTOCOL* dhcpProtocol;
+        EFI_STATUS status = bs->LocateProtocol(&dhcpGuid, NULL, (VOID**)&dhcpProtocol);
+        if(EFI_ERROR(status)) {
+            printf_c16(u"ERROR: DHCP protocol(s) not found.\r\n");
+        }
+        else {
+            printf_c16(u"DHCP protocol(s) found\r\n");
+        }
+
+        EFI_GUID dhcpGuid2 = EFI_DHCP4_PROTOCOL_GUID;
+        EFI_DHCP4_PROTOCOL* dhcpProtocol2;
+        status = bs->LocateProtocol(&dhcpGuid2, NULL, (VOID**)&dhcpProtocol2);
+        if(EFI_ERROR(status)) {
+            printf_c16(u"ERROR: DHCP protocol(s) not found.\r\n");
+        }
+        else {
+            printf_c16(u"DHCP protocol(s) found.\r\n");
+        }
+
+        EFI_DHCP4_MODE_DATA one;
+        EFI_DHCP4_MODE_DATA two;
+        status = dhcpProtocol->GetModeData(dhcpProtocol, &one);
+        if(EFI_ERROR(status)) {
+            error(status, u"ERROR: of dhcpProtocol->GetModeData\r\n");
+        }
+        else {
+            printf_c16(u"Success of dhcpProtocol->GetModeData\r\n");
+        }
+        status = dhcpProtocol2->GetModeData(dhcpProtocol2, &two);
+        if(EFI_ERROR(status)) {
+            error(status, u"ERROR: of dhcpProtocol2->GetModeData\r\n");
+        }
+        else {
+            printf_c16(u"Success of dhcpProtocol2->GetModeData\r\n");
+        }
         EFI_TIME old_time = {0}, new_time = {0};
         UINTN buffer_size = 1024;
         char buffer[1024];
