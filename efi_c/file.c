@@ -928,19 +928,9 @@ EFI_STATUS test_network(void) {
             error(status, u"of netProtocol->Statistics\r\n");
         }
 
-        EFI_GUID dhcpGuid = EFI_DHCP4_SERVICE_BINDING_PROTOCOL_GUID;
+        EFI_GUID dhcpGuid = EFI_DHCP4_PROTOCOL_GUID;
         EFI_DHCP4_PROTOCOL* dhcpProtocol;
-        EFI_STATUS status = bs->LocateProtocol(&dhcpGuid, NULL, (VOID**)&dhcpProtocol);
-        if(EFI_ERROR(status)) {
-            printf_c16(u"ERROR: DHCP protocol(s) not found.\r\n");
-        }
-        else {
-            printf_c16(u"DHCP protocol(s) found\r\n");
-        }
-
-        EFI_GUID dhcpGuid2 = EFI_DHCP4_PROTOCOL_GUID;
-        EFI_DHCP4_PROTOCOL* dhcpProtocol2;
-        status = bs->LocateProtocol(&dhcpGuid2, NULL, (VOID**)&dhcpProtocol2);
+        status = bs->LocateProtocol(&dhcpGuid, NULL, (VOID**)&dhcpProtocol);
         if(EFI_ERROR(status)) {
             printf_c16(u"ERROR: DHCP protocol(s) not found.\r\n");
         }
@@ -948,22 +938,33 @@ EFI_STATUS test_network(void) {
             printf_c16(u"DHCP protocol(s) found.\r\n");
         }
 
-        EFI_DHCP4_MODE_DATA one;
-        EFI_DHCP4_MODE_DATA two;
-        status = dhcpProtocol->GetModeData(dhcpProtocol, &one);
+        EFI_DHCP4_MODE_DATA mode;
+        status = dhcpProtocol->GetModeData(dhcpProtocol, &mode);
         if(EFI_ERROR(status)) {
             error(status, u"ERROR: of dhcpProtocol->GetModeData\r\n");
         }
         else {
-            printf_c16(u"Success of dhcpProtocol->GetModeData\r\n");
+            printf_c16(u"State: %llx\r\n"
+            u"ConfigData: %llx\r\n"
+            u"ClientAddress: %llx\r\n"
+            u"ClientMacAddress: %llx\r\n"
+            u"ServerAddress: %llx\r\n"
+            u"RouterAddress: %llx\r\n"
+            u"SubnetMask: %llx\r\n"
+            u"LeaseTime: %llx\r\n"
+            u"ReplyPacket: %llx\r\n",
+            mode.State,
+            mode.ConfigData,
+            mode.ClientAddress,
+            mode.ClientMacAddress,
+            mode.ServerAddress,
+            mode.RouterAddress,
+            mode.SubnetMask,
+            mode.LeaseTime,
+            mode.ReplyPacket
+            );
         }
-        status = dhcpProtocol2->GetModeData(dhcpProtocol2, &two);
-        if(EFI_ERROR(status)) {
-            error(status, u"ERROR: of dhcpProtocol2->GetModeData\r\n");
-        }
-        else {
-            printf_c16(u"Success of dhcpProtocol2->GetModeData\r\n");
-        }
+
         EFI_TIME old_time = {0}, new_time = {0};
         UINTN buffer_size = 1024;
         char buffer[1024];
