@@ -965,7 +965,8 @@ EFI_STATUS test_network(void) {
             );
         }
 
-        status = dhcpProtocol->Configure(dhcpProtocol, NULL); //Assuming: Default Config
+        //Does EFI_DHCP4_CONFIG_DATA require EFI_DHCP4_SERVICE_BINDING_PROTOCOL and associated CreateChild?
+        status = dhcpProtocol->Configure(dhcpProtocol, NULL);
         if(status == EFI_SUCCESS) {
             printf_c16(u"Success of dhcpProtocol->Configure\r\n");
         }
