@@ -965,6 +965,27 @@ EFI_STATUS test_network(void) {
             );
         }
 
+        status = dhcpProtocol->Configure(dhcpProtocol, NULL); //Assuming: Default Config
+        if(status == EFI_SUCCESS) {
+            printf_c16(u"Success of dhcpProtocol->Configure\r\n");
+        }
+        else {
+            error(status, u"of dhcpProtocol->Configure\r\n");
+        }
+		EFI_EVENT done; //not to be confused with EFI_DHCP4_EVENT (pp. 1328)
+        bs->CreateEvent(EVT_NOTIFY_SIGNAL,
+                        TPL_CALLBACK,
+                        NULL,
+                        NULL,
+                        &done);
+
+		status = dhcpProtocol->Start(dhcpProtocol, done);
+		if(status == EFI_SUCCESS) {
+			printf_c16(u"Success of dhcpProtocol->Start\r\n");
+		}
+		else {
+			error(status, u"of dhcpProtocol->Start\r\n");
+		}
         EFI_TIME old_time = {0}, new_time = {0};
         UINTN buffer_size = 1024;
         char buffer[1024];
@@ -974,6 +995,14 @@ EFI_STATUS test_network(void) {
         EFI_TIME_CAPABILITIES time_cap = {0};
         UINTN now = 0;
         while(now < 30) {
+			/*
+            if(done) {
+				printf_c16(u"done: non-zero\r");
+			}
+			else {
+				printf_c16(u"done: 0\r");
+			}
+            */
             rs->GetTime(&new_time, &time_cap);
             if (old_time.Second != new_time.Second) {
                 if(new_time.Second - old_time.Second >= 0) {
