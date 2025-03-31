@@ -1,12 +1,14 @@
+bin
 *.EFI
 *.d
 *.o
 *.INF
 *.vhd
+build
 *.bin
 *.obj
 *.elf
 *.pe
 *.binelf
 *.binpe
-*.raw
+lib
