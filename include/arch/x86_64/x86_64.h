@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include "../../../efi_lib.h"
+#include "efi_lib.h"
 
 // GDT = Global Descriptor Table
 // LDT = Local Descriptor Table

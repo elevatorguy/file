@@ -32,8 +32,8 @@ uint32_t yres = 0;    // Y/Vertical resolution of framebuffer
 uint32_t x = 0;       // X offset into framebuffer
 uint32_t y = 0;       // Y offset into framebuffer
 
-const uint32_t text_fg_color = colors[LIGHT_GRAY];
-const uint32_t text_bg_color = colors[DARK_GRAY];
+const uint32_t text_fg_color = 0xFFDDDDDD;//colors[LIGHT_GRAY];
+const uint32_t text_bg_color = 0xFF222222;//colors[DARK_GRAY];
 
 void print_string(char *string, Bitmap_Font *font);
 

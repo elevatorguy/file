@@ -6,25 +6,11 @@
 ARCH 	?= x86_64
 MACHINE ?= unknown
 
-ifeq ($(OS), Windows_NT)
-HOST_OS     ::= Windows
-QEMU_SCRIPT ::= qemu_$(ARCH).bat
-else
-HOST_OS     ::= Linux
-QEMU_SCRIPT ::= ./qemu_$(ARCH).sh
-endif
-
 # Uncomment disk image program & shell script 
 DISK_IMG_PGM ::= write_gpt
+DISK_IMG_FOLDER ::= bin
 
-DISK_IMG_FOLDER ::= ../UEFI-GPT-image-creator/
-
-ifeq ($(ARCH), x86_64)
-OVMF ::= $(DISK_IMG_FOLDER)bios64.bin
-endif
-ifeq ($(ARCH), aarch64)
-OVMF ::= QEMU_EFI_AARCH64.raw
-endif
+BUILD_DIR ::= build
 
 # Uncomment CC/LDFLAGS for EFI object - gcc
 #EFICC       ::= $(ARCH)-w64-mingw32-gcc
@@ -91,57 +77,40 @@ FONT ::= ter-132n.psf	# PSF2 Bitmapped Font: Terminus 16x32 ISO8859-1
 # Add kernel binary to new disk image
 ADD_KERNEL = \
 	cd $(DISK_IMG_FOLDER); \
-	./$(DISK_IMG_PGM) -ae /EFI/BOOT/ ../efi_c/$(EFI_APP) \
-					  -ad ../efi_c/$(KERNEL) ../efi_c/$(FONT);
+	./$(DISK_IMG_PGM) -ae /EFI/BOOT/ ../$(BUILD_DIR)/$(EFI_APP) \
+					  -ad ../$(BUILD_DIR)/$(KERNEL) ../$(FONT); \
+	mv FILE.TXT ../$(BUILD_DIR); \
+	mv file.img ../$(BUILD_DIR)
 
-all: $(DISK_IMG_FOLDER)/$(DISK_IMG_PGM) $(OVMF) $(EFI_APP) $(KERNEL) 
-	$(QEMU_SCRIPT)
-
-$(DISK_IMG_FOLDER)/$(DISK_IMG_PGM):
-	cd $(DISK_IMG_FOLDER) && $(MAKE) 
-
-# Pad out AARCH64 ovmf file to 64MiB for QEMU to work correctly if wanting to use pflash,
-#   the -bios option otherwise seems fine with the default size.
-# Not sure what all windows has, if not dd. Maybe fsutil works?
-$(OVMF): 
-ifeq ($(ARCH), aarch64)
-ifeq ($(HOST_OS), Linux)
-	dd if=/dev/zero of=$@ bs=1M count=64 
-	dd if=QEMU_EFI_AARCH64.fd of=$@ bs=1M conv=notrunc
-else
-	cp QEMU_EFI_AARCH64.fd $@
-	fsutil file seteof $@ 67108864
-endif
-endif
-
-$(EFI_APP): $(EFIOBJ) 
-	$(EFICC) $(EFI_LDFLAGS) -o $@ $<
+all: $(BUILD_DIR) $(EFI_APP) $(KERNEL)
 	$(ADD_KERNEL)
 
-$(EFIOBJ): $(EFISRC)
-	$(EFICC) $(CFLAGS) -c -o $@ $<
+$(BUILD_DIR):
+	mkdir -p $(BUILD_DIR);
 
-kernel.elf: $(KERNEL_SRC)
-	$(ELFCC) $(KERNEL_CFLAGS) $(KERNEL_LDFLAGS) -o $@ $<
-	$(ADD_KERNEL)
+$(EFI_APP): $(EFIOBJ)
+	$(EFICC) $(EFI_LDFLAGS) -o $(BUILD_DIR)/$@ $(BUILD_DIR)/$<
 
-kernel.pe: $(KERNEL_SRC)
-	$(PECC) $(KERNEL_CFLAGS) $(KERNEL_LDFLAGS) -o $@ $<
-	$(ADD_KERNEL)
+$(EFIOBJ): src/$(EFISRC)
+	$(EFICC) $(CFLAGS) -c -o $(BUILD_DIR)/$@ $<
 
-kernel.binelf: $(KERNEL_SRC)
-	$(ELFCC) -c $(KERNEL_CFLAGS) -o kernel.o $<
-	$(ELFLD) $(KERNEL_LDFLAGS) -Tkernel.ld --oformat binary -o $@ kernel.o 
-	$(ADD_KERNEL)
+kernel.elf: src/$(KERNEL_SRC)
+	$(ELFCC) $(KERNEL_CFLAGS) $(KERNEL_LDFLAGS) -o $(BUILD_DIR)/$@ $<
 
-kernel.binpe: $(KERNEL_SRC)
-	$(PECC) -c $(KERNEL_CFLAGS) -o kernel.o $<
-	$(PELD) $(KERNEL_LDFLAGS) -Tkernel.ld --image-base=0 -o kernel.obj kernel.o
-	objcopy -O binary kernel.obj $@
-	$(ADD_KERNEL)
+kernel.pe: src/$(KERNEL_SRC)
+	$(PECC) $(KERNEL_CFLAGS) $(KERNEL_LDFLAGS) -o $(BUILD_DIR)/$@ $<
+
+kernel.binelf: src/$(KERNEL_SRC)
+	$(ELFCC) -c $(KERNEL_CFLAGS) -o $(BUILD_DIR)/kernel.o $<
+	$(ELFLD) $(KERNEL_LDFLAGS) -Tkernel.ld --oformat binary -o $(BUILD_DIR)/$@ $(BUILD_DIR)/kernel.o
+
+kernel.binpe: src/$(KERNEL_SRC)
+	$(PECC) -c $(KERNEL_CFLAGS) -o $(BUILD_DIR)/kernel.o $<
+	$(PELD) $(KERNEL_LDFLAGS) -Tkernel.ld --image-base=0 -o $(BUILD_DIR)/kernel.obj $(BUILD_DIR)/kernel.o
+	objcopy -O binary $(BUILD_DIR)/kernel.obj $(BUILD_DIR)/$@
 
 -include $(DEPENDS)
 
 clean:
+	cd $(BUILD_DIR); \
 	rm -rf $(EFI_APP) $(KERNEL) [!bios]*.bin* *.d *.efi *.EFI *.elf *.o *.obj *.pe
-
