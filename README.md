@@ -33,20 +33,17 @@ Windows users can use the same MinGW gcc compiler. Clang, through LLVM, supports
 cross compiling with `-target`, while gcc has to use a different compiler for different target
 architectures.
 - `make`; gnu make preferably, unless posix defines ifeq() or other niceties.
-- `qemu` with `ovmf` firmware, x86_64 is provided as `bios64.bin` in the "UEFI-GPT-image-creator" 
-directory, aarch64 as QEMU_EFI_AARCH64.raw and VARS raw files.
 
 ## building 
 1. *NOTE: This git repo uses submodules*. To initialize everything use 
 `git clone --recurse-submodules https://github.com/queso-fuego/uefi-dev` or after cloning 
 use `git submodule update --remote` or `git pull --recurse-submodules`. 
-2. `cd /efi_c/ && make` (this should build the x86_64 target and launch qemu automatically).
+2. `make` (this should build the x86_64 target).
 
-Running/testing thereafter should only need `make` in the main `efi_c` directory.
+Running/testing thereafter should only need `make` in the repository root.
 
 ## running/testing
-- Emulation: Use `make` in the `efi_c` directory to run using qemu/ovmf.
-- Bare metal: On linux, I recommend using `dd` to write the disk image to e.g. a USB drive. 
+- On linux, I recommend using `dd` to write the disk image to e.g. a USB drive. 
 Use `lsblk` or another way to find your USB's block device. 
 An example using the default disk image name and assuming /dev/sdB as a USB drive could be 
 `dd if=uefi-dev/UEFI-GPT-image-creator/test.hdd of=/dev/sdb bs=1M`.
