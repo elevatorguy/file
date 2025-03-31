@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#include "../../../lib.h"
+#include "lib.h"
 
 // GDT = Global Descriptor Table
 // LDT = Local Descriptor Table

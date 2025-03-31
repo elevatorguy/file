@@ -4,6 +4,7 @@ lib
 *.o
 *.INF
 *.vhd
+build
 *.bin
 *.obj
 *.elf
