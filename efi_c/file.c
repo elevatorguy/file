@@ -927,8 +927,8 @@ EFI_STATUS test_network(void) {
         else {
             error(status, u"of netProtocol->Statistics\r\n");
         }
-
         EFI_GUID dhcpGuid = EFI_DHCP4_PROTOCOL_GUID;
+        /*
         EFI_DHCP4_PROTOCOL* dhcpProtocol;
         status = bs->LocateProtocol(&dhcpGuid, NULL, (VOID**)&dhcpProtocol);
         if(EFI_ERROR(status)) {
@@ -936,6 +936,41 @@ EFI_STATUS test_network(void) {
         }
         else {
             printf_c16(u"DHCP protocol(s) found.\r\n");
+        }
+        */
+
+        EFI_GUID dhcpBindingGuid = EFI_DHCP4_SERVICE_BINDING_PROTOCOL_GUID;
+        EFI_SERVICE_BINDING_PROTOCOL* dhcpServiceBindingProtocol;
+        status = bs->LocateProtocol(&dhcpBindingGuid, NULL, (VOID**)&dhcpServiceBindingProtocol);
+        if(EFI_ERROR(status)) {
+            error(status, u"ERROR: DHCP service binding protocol(s) not found.\r\n");
+        }
+        else {
+            printf_c16(u"DHCP service binding protocol(s) found.\r\n");
+        }
+
+        EFI_HANDLE handle;
+        status = dhcpServiceBindingProtocol->CreateChild(dhcpServiceBindingProtocol, &handle); //11.6.1 - EFI_SERVICE_BINDING_PROTOCOL
+        if(status != EFI_SUCCESS){
+            error(status, u"Failed initialization of DHCP4 protocol - service binding.\r\n");
+        }
+        else {
+            printf_c16(u"DHCP4 protocol ready.\r\n");
+        }
+
+        EFI_DHCP4_PROTOCOL* dhcpProtocol;
+        status = bs->OpenProtocol(handle,
+                                  &dhcpGuid,
+                                  (VOID **)&dhcpProtocol,
+                                  image,
+                                  NULL,
+                                  EFI_OPEN_PROTOCOL_GET_PROTOCOL); //no need to close it
+
+        if(status != EFI_SUCCESS) {
+            error(status, u"of OpenProtocol\r\n");
+        }
+        else {
+            printf_c16(u"success of OpenProtocol\r\n");
         }
 
         EFI_DHCP4_MODE_DATA mode;
@@ -1060,6 +1095,8 @@ EFI_STATUS test_network(void) {
         else {
             error(status, u"of netProtocol->Stop\r\n");
         }
+
+        dhcpServiceBindingProtocol->DestroyChild(dhcpServiceBindingProtocol, handle);
 
         /*
           Beyond EFI_SIMPLE_NETWORK_PROTOCOL:
