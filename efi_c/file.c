@@ -949,17 +949,19 @@ EFI_STATUS test_network(void) {
             printf_c16(u"DHCP service binding protocol(s) found.\r\n");
         }
 
-        EFI_HANDLE handle;
-        status = dhcpServiceBindingProtocol->CreateChild(dhcpServiceBindingProtocol, &handle); //11.6.1 - EFI_SERVICE_BINDING_PROTOCOL
+        EFI_HANDLE* handle = NULL;
+        status = dhcpServiceBindingProtocol->CreateChild(dhcpServiceBindingProtocol, handle); //11.6.1 - EFI_SERVICE_BINDING_PROTOCOL
+
         if(status != EFI_SUCCESS){
-            error(status, u"Failed initialization of DHCP4 protocol - service binding.\r\n");
+            error(status, u"of initialization of DHCP4 protocol - service binding.\r\n");
+            goto abort;
         }
         else {
             printf_c16(u"DHCP4 protocol ready.\r\n");
         }
 
         EFI_DHCP4_PROTOCOL* dhcpProtocol;
-        status = bs->OpenProtocol(handle,
+        status = bs->OpenProtocol(*handle,
                                   &dhcpGuid,
                                   (VOID **)&dhcpProtocol,
                                   image,
@@ -968,6 +970,7 @@ EFI_STATUS test_network(void) {
 
         if(status != EFI_SUCCESS) {
             error(status, u"of OpenProtocol\r\n");
+            goto cleanup;
         }
         else {
             printf_c16(u"success of OpenProtocol\r\n");
@@ -1096,8 +1099,15 @@ EFI_STATUS test_network(void) {
             error(status, u"of netProtocol->Stop\r\n");
         }
 
-        dhcpServiceBindingProtocol->DestroyChild(dhcpServiceBindingProtocol, handle);
-
+        cleanup:
+        status = dhcpServiceBindingProtocol->DestroyChild(dhcpServiceBindingProtocol, handle);
+        if(status != EFI_SUCCESS) {
+            printf_c16(u"Success of serviceBindingProtocol->DestroyChild\r\n");
+        }
+        else {
+            error(status, u"of serviceBindingProtocol->DestroyChild\r\n");
+        }
+        abort:
         /*
           Beyond EFI_SIMPLE_NETWORK_PROTOCOL:
           if ARP,   see 29.1 (pp. 1310 to pp. 1320 in UEFI Spec 2.11 - ARP Protocol)
