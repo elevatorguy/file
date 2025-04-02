@@ -949,8 +949,8 @@ EFI_STATUS test_network(void) {
             printf_c16(u"DHCP service binding protocol(s) found.\r\n");
         }
 
-        EFI_HANDLE* handle = NULL;
-        status = dhcpServiceBindingProtocol->CreateChild(dhcpServiceBindingProtocol, handle); //11.6.1 - EFI_SERVICE_BINDING_PROTOCOL
+        EFI_HANDLE handle = NULL;
+        status = dhcpServiceBindingProtocol->CreateChild(dhcpServiceBindingProtocol, &handle); //11.6.1 - EFI_SERVICE_BINDING_PROTOCOL
 
         if(status != EFI_SUCCESS){
             error(status, u"of initialization of DHCP4 protocol - service binding.\r\n");
@@ -961,7 +961,7 @@ EFI_STATUS test_network(void) {
         }
 
         EFI_DHCP4_PROTOCOL* dhcpProtocol;
-        status = bs->OpenProtocol(*handle,
+        status = bs->OpenProtocol(handle,
                                   &dhcpGuid,
                                   (VOID **)&dhcpProtocol,
                                   image,
@@ -973,7 +973,7 @@ EFI_STATUS test_network(void) {
             goto cleanup;
         }
         else {
-            printf_c16(u"success of OpenProtocol\r\n");
+            printf_c16(u"Success of OpenProtocol\r\n");
         }
 
         EFI_DHCP4_MODE_DATA mode;
