@@ -805,11 +805,34 @@ EFI_STATUS test_mouse(void) {
 EFI_STATUS test_network(void) {
     cout->ClearScreen(cout);
 
+    EFI_HANDLE driver;
+    CHAR16 *driver_file = u"\\EFI\\DRIVER";
+
+    EFI_STATUS status = bs->LoadImage(0, image, (EFI_DEVICE_PATH_PROTOCOL*)driver_file, NULL, 0, &driver); //7.4.1
+    if(status == EFI_SUCCESS) {
+        printf_c16(u"Success of bs->LoadImage.\r\n");
+        CHAR16* exitData = NULL;
+        UINTN exitSize = 100;
+        for(int i = 0; i < 100; i++) {
+            exitData[i] = '\0';
+        }
+        status = bs->StartImage(driver, &exitSize, &exitData);
+        if(status == EFI_SUCCESS) {
+            printf_c16(u"Success of bs->StartImage\r\n");
+        }
+        else {
+            error(status, u"of bs->StartImage\r\n");
+        }
+    }
+    else {
+        error(status, u"of bs->LoadImage.\r\n");
+    }
+
     static bool first = true;
 
     EFI_GUID netGuid = EFI_SIMPLE_NETWORK_PROTOCOL_GUID;
     EFI_SIMPLE_NETWORK_PROTOCOL* netProtocol;
-    EFI_STATUS status = bs->LocateProtocol(&netGuid, NULL, (VOID**)&netProtocol);
+    status = bs->LocateProtocol(&netGuid, NULL, (VOID**)&netProtocol);
     if(EFI_ERROR(status)) {
         printf_c16(u"ERROR: Network protocol(s) not found.\r\n");
     }
@@ -2347,21 +2370,21 @@ EFI_STATUS change_boot_variables(void) {
                     goto next;
                 }
 
-                if (isxdigit_c16(var_name_buf[4]) && var_name_size == 18) {  
+                if (isxdigit_c16(var_name_buf[4]) && var_name_size == 18) {
                     // Boot#### load option: Name size = 8 CHAR16 chars * 2 bytes + CHAR16 null bytes
                     EFI_LOAD_OPTION *load_option = (EFI_LOAD_OPTION *)data;
                     CHAR16 *description = (CHAR16 *)((UINT8 *)data + sizeof(UINT32) + sizeof(UINT16));
-                    printf_c16(u"%s\r\n", description);    
+                    printf_c16(u"%s\r\n", description);
 
                     CHAR16 *p = description;
                     UINTN strlen =  0;
-                    while (p[strlen]) strlen++;  
+                    while (p[strlen]) strlen++;
                     strlen++;                    // Skip null byte
 
-                    EFI_DEVICE_PATH_PROTOCOL *file_path_list = 
-                        (EFI_DEVICE_PATH_PROTOCOL *)(description + strlen); 
+                    EFI_DEVICE_PATH_PROTOCOL *file_path_list =
+                        (EFI_DEVICE_PATH_PROTOCOL *)(description + strlen);
 
-                    CHAR16 *device_path_text = 
+                    CHAR16 *device_path_text =
                         dpttp->ConvertDevicePathToText(file_path_list, FALSE, FALSE);
 
                     printf_c16(u"Device Path: %s\r\n", device_path_text ? device_path_text : u"(null)");
@@ -2373,7 +2396,7 @@ EFI_STATUS change_boot_variables(void) {
                         for (UINTN i = 0; i < optional_data_size; i++)
                             printf_c16(u"%.2hhx", optional_data[i]);
 
-                        printf_c16(u"\r\n"); 
+                        printf_c16(u"\r\n");
                     }
                     
                     goto next; 

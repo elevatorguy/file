@@ -1792,6 +1792,25 @@ typedef struct {
     void *QueryVariableInfo;
 } EFI_RUNTIME_SERVICES;
 
+typedef
+EFI_STATUS
+(EFIAPI* EFI_IMAGE_LOAD) (
+  IN BOOLEAN                   BootPolicy,
+  IN EFI_HANDLE                ParentImageHandle,
+  IN EFI_DEVICE_PATH_PROTOCOL* DevicePath OPTIONAL,
+  IN VOID*                     SourceBuffer OPTIONAL,
+  IN UINTN                     SourceSize,
+  OUT EFI_HANDLE*              ImageHandle
+);
+
+typedef
+EFI_STATUS
+(EFIAPI* EFI_IMAGE_START) (
+  IN EFI_HANDLE                ImageHandle,
+  OUT UINTN*                   ExitDataSize,
+  OUT CHAR16**                 ExitData OPTIONAL
+);
+
 // EFI_BOOT_SERVICES: UEFI Spec 2.10 section 4.4.1
 typedef struct {
     EFI_TABLE_HEADER Hdr;
@@ -1837,8 +1856,8 @@ typedef struct {
     //
     // Image Services
     //
-    void*                  LoadImage;
-    void*                  StartImage;
+    EFI_IMAGE_LOAD         LoadImage;
+    EFI_IMAGE_START        StartImage;
     void*                  Exit;
     void*                  UnloadImage;
     EFI_EXIT_BOOT_SERVICES ExitBootServices;
