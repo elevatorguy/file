@@ -806,9 +806,16 @@ EFI_STATUS test_network(void) {
     cout->ClearScreen(cout);
 
     EFI_HANDLE driver;
-    CHAR16 *driver_file = u"\\EFI\\DRIVER";
+    CHAR16* driver_file = u"\\EFI\\DRIVER";
 
-    EFI_STATUS status = bs->LoadImage(0, image, (EFI_DEVICE_PATH_PROTOCOL*)driver_file, NULL, 0, &driver); //7.4.1
+    UINTN buf_size = 0;
+    VOID* driv_file_buf = read_esp_file_to_buffer(driver_file, &buf_size);
+    EFI_STATUS status = EFI_SUCCESS;
+    if (!driv_file_buf) {
+        goto abort;
+    }
+
+    status = bs->LoadImage(0, image, NULL, driv_file_buf, buf_size, &driver); //7.4.1
     if(status == EFI_SUCCESS) {
         printf_c16(u"Success of bs->LoadImage.\r\n");
         CHAR16* exitData = NULL;
@@ -1131,6 +1138,8 @@ EFI_STATUS test_network(void) {
             error(status, u"of serviceBindingProtocol->DestroyChild\r\n");
         }
         abort:
+        bs->FreePool(driv_file_buf);
+
         /*
           Beyond EFI_SIMPLE_NETWORK_PROTOCOL:
           if ARP,   see 29.1 (pp. 1310 to pp. 1320 in UEFI Spec 2.11 - ARP Protocol)
