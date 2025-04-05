@@ -799,12 +799,7 @@ EFI_STATUS test_mouse(void) {
     return EFI_SUCCESS;
 }
 
-// ==================================
-// EFI_SIMPLE_NETWORK_PROTOCOL, etc.
-// ==================================
-EFI_STATUS test_network(void) {
-    cout->ClearScreen(cout);
-
+void load_drivers(void) {
     EFI_HANDLE driver;
     CHAR16* driver_file = u"\\EFI\\DRIVER";
 
@@ -818,16 +813,9 @@ EFI_STATUS test_network(void) {
     status = bs->LoadImage(0, image, NULL, driv_file_buf, buf_size, &driver); //7.4.1
     if(status == EFI_SUCCESS) {
         printf_c16(u"Success of bs->LoadImage.\r\n");
-        CHAR16* exitData = NULL;
-        UINTN exitSize = 100;
-        for(int i = 0; i < 100; i++) {
-            exitData[i] = '\0';
-        }
-        status = bs->StartImage(driver, &exitSize, &exitData);
+        status = bs->StartImage(driver, 0, 0);
         if(status == EFI_SUCCESS) {
             printf_c16(u"Success of bs->StartImage\r\n");
-
-            connect_all_controllers();
         }
         else {
             error(status, u"of bs->StartImage\r\n");
@@ -836,12 +824,21 @@ EFI_STATUS test_network(void) {
     else {
         error(status, u"of bs->LoadImage.\r\n");
     }
+    abort:
+    bs->FreePool(driv_file_buf);
+}
+
+// ==================================
+// EFI_SIMPLE_NETWORK_PROTOCOL, etc.
+// ==================================
+EFI_STATUS test_network(void) {
+    cout->ClearScreen(cout);
 
     static bool first = true;
 
     EFI_GUID netGuid = EFI_SIMPLE_NETWORK_PROTOCOL_GUID;
     EFI_SIMPLE_NETWORK_PROTOCOL* netProtocol;
-    status = bs->LocateProtocol(&netGuid, NULL, (VOID**)&netProtocol);
+    EFI_STATUS status = bs->LocateProtocol(&netGuid, NULL, (VOID**)&netProtocol);
     if(EFI_ERROR(status)) {
         printf_c16(u"ERROR: Network protocol(s) not found.\r\n");
     }
@@ -960,17 +957,6 @@ EFI_STATUS test_network(void) {
             error(status, u"of netProtocol->Statistics\r\n");
         }
         EFI_GUID dhcpGuid = EFI_DHCP4_PROTOCOL_GUID;
-        /*
-        EFI_DHCP4_PROTOCOL* dhcpProtocol;
-        status = bs->LocateProtocol(&dhcpGuid, NULL, (VOID**)&dhcpProtocol);
-        if(EFI_ERROR(status)) {
-            printf_c16(u"ERROR: DHCP protocol(s) not found.\r\n");
-        }
-        else {
-            printf_c16(u"DHCP protocol(s) found.\r\n");
-        }
-        */
-
         EFI_GUID dhcpBindingGuid = EFI_DHCP4_SERVICE_BINDING_PROTOCOL_GUID;
         EFI_SERVICE_BINDING_PROTOCOL* dhcpServiceBindingProtocol;
         status = bs->LocateProtocol(&dhcpBindingGuid, NULL, (VOID**)&dhcpServiceBindingProtocol);
@@ -1041,24 +1027,7 @@ EFI_STATUS test_network(void) {
             printf_c16(u"Success of dhcpProtocol->Configure\r\n");
         }
         else {
-            error(status, u"of dhcpProtocol->Configure\r\n");
-            /*
-                EFI_ACCESS_DENIED
-                    "The EFI DHCPv4 Protocol driver is now in the Dhcp4Init or Dhcp4InitReboot state, if the original state of this driver was Dhcp4Stopped, Dhcp4Init, Dhcp4InitReboot, or Dhcp4Bound and the value of Dhcp4CfgData was not NULL. Otherwise, the state was left unchanged."
-                EFI_ACCESS_DENIED
-                    "This instance of the EFI DHCPv4 Protocol driver was not in the Dhcp4Stopped, Dhcp4Init, Dhcp4InitReboot, or Dhcp4Bound state."
-                EFI_INVALID_PARAMETER
-                    "One or more following conditions are TRUE:
-                        •︎ This is NULL.
-                        •︎ DiscoverTryCount > 0 and DiscoverTimeout is NULL
-                        •︎ RequestTryCount > 0 and RequestTimeout is NULL.
-                        •︎ OptionCount > 0 and OptionList is NULL.
-                        •︎ ClientAddress is not a valid unicast address."
-                EFI_OUT_OF_RESOURCES
-                    "Required system resources could not be allocated."
-                EFI_DEVICE_ERROR
-                    "An unexpected system or network error ocurred."
-            */
+            error(status, u"of dhcpProtocol->Configure\r\n"); //pp. 1331
         }
 		EFI_EVENT done; //not to be confused with EFI_DHCP4_EVENT (pp. 1328)
         bs->CreateEvent(EVT_NOTIFY_SIGNAL,
@@ -1140,7 +1109,6 @@ EFI_STATUS test_network(void) {
             error(status, u"of serviceBindingProtocol->DestroyChild\r\n");
         }
         abort:
-        bs->FreePool(driv_file_buf);
 
         /*
           Beyond EFI_SIMPLE_NETWORK_PROTOCOL:
@@ -2836,6 +2804,8 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
         write_to_another_disk,
         install_to_disk
     };
+
+    load_drivers();
 
     // Connect all controllers found for all handles, to hopefully fix
     //   any bugs related to not initializing device drivers from firmware
