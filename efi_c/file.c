@@ -826,6 +826,8 @@ EFI_STATUS test_network(void) {
         status = bs->StartImage(driver, &exitSize, &exitData);
         if(status == EFI_SUCCESS) {
             printf_c16(u"Success of bs->StartImage\r\n");
+
+            connect_all_controllers();
         }
         else {
             error(status, u"of bs->StartImage\r\n");
@@ -1131,7 +1133,7 @@ EFI_STATUS test_network(void) {
 
         cleanup:
         status = dhcpServiceBindingProtocol->DestroyChild(dhcpServiceBindingProtocol, handle);
-        if(status != EFI_SUCCESS) {
+        if(status == EFI_SUCCESS) {
             printf_c16(u"Success of serviceBindingProtocol->DestroyChild\r\n");
         }
         else {
