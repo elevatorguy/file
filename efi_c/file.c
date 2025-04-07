@@ -2756,7 +2756,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     cout->QueryMode(cout, cout->Mode->Mode, &cols, &rows);
 
     // Set global text rows/cols values
-    text_rows = rows; 
+    text_rows = rows;
     text_cols = cols;
 
     // Check for "installed" file to autoload kernel instead of main menu, or not
@@ -2833,9 +2833,12 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
         // Close Timer Event for cleanup
         bs->CloseEvent(timer_event);
 
+        context.rows = text_rows;
+        context.cols = text_cols;
+
         // Create timer event, to print date/time on screen every ~1second
         bs->CreateEvent(EVT_TIMER | EVT_NOTIFY_SIGNAL,
-                        TPL_CALLBACK, 
+                        TPL_CALLBACK,
                         print_datetime,
                         (VOID *)&context,
                         &timer_event);
@@ -2844,7 +2847,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
         bs->SetTimer(timer_event, TimerPeriodic, 10000000);
 
         // Print keybinds at bottom of screen
-        cout->SetCursorPosition(cout, 0, rows-3);
+        cout->SetCursorPosition(cout, 0, text_rows-3);
         printf_c16(u"Up/Down Arrow = Move cursor\r\n"
                u"Enter = Select\r\n"
                u"Escape = Shutdown");
@@ -2872,6 +2875,12 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 
             // Process input
             switch (key.ScanCode) {
+                case SCANCODE_INSERT:
+                    static bool status = true;
+                    status = !status;
+                    cout->EnableCursor(cout, status);
+                    break;
+
                 case SCANCODE_UP_ARROW:
                 case SCANCODE_DOWN_ARROW:
                     // De-highlight current row 

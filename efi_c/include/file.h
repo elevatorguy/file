@@ -67,6 +67,7 @@ typedef UINT64 EFI_VIRTUAL_ADDRESS;
 //  UEFI Spec 2.10A Appendix B.1
 #define SCANCODE_UP_ARROW   0x1
 #define SCANCODE_DOWN_ARROW 0x2
+#define SCANCODE_INSERT     0x7
 #define SCANCODE_ESC        0x17
 
 #define EFI_SIMPLE_NETWORK_PROTOCOL_GUID \
@@ -865,6 +866,13 @@ EFI_STATUS
     IN UINTN                           Row
 );
 
+typedef
+EFI_STATUS
+(EFIAPI* EFI_TEXT_ENABLE_CURSOR) (
+ IN EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL*   This,
+ IN BOOLEAN                            Visible
+);
+
 // SIMPLE_TEXT_OUTPUT_MODE
 typedef struct {
     INT32   MaxMode;
@@ -887,7 +895,7 @@ typedef struct EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL {
     EFI_TEXT_SET_ATTRIBUTE       SetAttribute;
     EFI_TEXT_CLEAR_SCREEN        ClearScreen;
     EFI_TEXT_SET_CURSOR_POSITION SetCursorPosition;
-    void                         *EnableCursor;
+    EFI_TEXT_ENABLE_CURSOR       EnableCursor;
     SIMPLE_TEXT_OUTPUT_MODE      *Mode;
 } EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL;
 
