@@ -2733,6 +2733,12 @@ EFI_STATUS write_to_another_disk(void) {
     return EFI_SUCCESS;
 }
 
+EFI_STATUS placeholder(void) {
+    printf_c16(u"Is this a feature?\r\n");
+    get_key();
+    return EFI_SUCCESS;
+}
+
 // ====================
 // Entry Point
 // ====================
@@ -2881,24 +2887,77 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
                     cout->EnableCursor(cout, status);
                     break;
 
-                case SCANCODE_UP_ARROW:
-                case SCANCODE_DOWN_ARROW:
-                    // De-highlight current row 
-                    cout->SetAttribute(cout, EFI_TEXT_ATTR(DEFAULT_FG_COLOR, DEFAULT_BG_COLOR));
-                    printf_c16(u"%s\r", menu_choices[current_row]);
-
-                    // Go up or down 1 row in range [0:max_row] (circular buffer)
-                    current_row = (key.ScanCode == SCANCODE_UP_ARROW) 
-                                  ? (current_row + max_row) % (max_row+1)
-                                  : (current_row+1) % (max_row+1);  
-
-                    // Highlight new current row
+                case SCANCODE_DELETE: {
+                    if(menu_choices[current_row][0] != u'\0') {
+                        printf_c16(u"Removing '%s'.", menu_choices[current_row]);
+                    } else {
+                        printf_c16(u"Removing item.");
+                    }
+                    UINTN col = cout->Mode->CursorColumn;
+                    EFI_INPUT_KEY key = get_key();
+                    cout->SetCursorPosition(cout, 0, current_row);
+                    for(UINTN i = 0; i < col; i++) {
+                        printf_c16(u" ");
+                    }
                     cout->SetCursorPosition(cout, 0, current_row);
                     cout->SetAttribute(cout, EFI_TEXT_ATTR(HIGHLIGHT_FG_COLOR, HIGHLIGHT_BG_COLOR));
-                    printf_c16(u"%s\r", menu_choices[current_row]);
+                    if(key.ScanCode != SCANCODE_ESC) {
+                        for(INTN i = current_row; i <= max_row; i++) {
+                            cout->SetCursorPosition(cout, 0, i);
+                            for(const CHAR16* j = menu_choices[i]; (*j) != '\0'; j++) {
+                                printf_c16(u" ");
+                            }
+                            if(i == max_row) {
+                                menu_choices[i] = u"";
+                                menu_funcs[i] = placeholder;
+                            }
+                            else {
+                                cout->SetCursorPosition(cout, 0, i);
+                                printf_c16(u"%s\r", menu_choices[i+1]);
+                                if(i == current_row) {
+                                    cout->SetAttribute(cout, EFI_TEXT_ATTR(DEFAULT_FG_COLOR, DEFAULT_BG_COLOR));
+                                }
+                                menu_choices[i] = menu_choices[i+1];
+                                menu_funcs[i] = menu_funcs[i+1];
+                            }
+                        }
+                        if((current_row == max_row) && (current_row != 0)) {
+                            cout->SetCursorPosition(cout, 0, current_row - 1);
+                            cout->SetAttribute(cout, EFI_TEXT_ATTR(HIGHLIGHT_FG_COLOR, HIGHLIGHT_BG_COLOR));
+                            printf_c16(u"%s\r", menu_choices[current_row - 1]);
+                            cout->SetAttribute(cout, EFI_TEXT_ATTR(DEFAULT_FG_COLOR, DEFAULT_BG_COLOR));
+                        }
+                        else {
+                            cout->SetCursorPosition(cout, 0, current_row);
+                        }
+                        max_row--;
+                    }
+                    else {
+                        printf_c16(u"%s\r", menu_choices[current_row]);
+                        cout->SetAttribute(cout, EFI_TEXT_ATTR(DEFAULT_FG_COLOR, DEFAULT_BG_COLOR));
+                    }
+                    break;
+                }
+                case SCANCODE_UP_ARROW:
+                case SCANCODE_DOWN_ARROW:
+                    if(max_row > 1) {
+                        // De-highlight current row
+                        cout->SetAttribute(cout, EFI_TEXT_ATTR(DEFAULT_FG_COLOR, DEFAULT_BG_COLOR));
+                        printf_c16(u"%s\r", menu_choices[current_row]);
 
-                    // Reset colors
-                    cout->SetAttribute(cout, EFI_TEXT_ATTR(DEFAULT_FG_COLOR, DEFAULT_BG_COLOR));
+                        // Go up or down 1 row in range [0:max_row] (circular buffer)
+                        current_row = (key.ScanCode == SCANCODE_UP_ARROW) 
+                                      ? (current_row + max_row) % (max_row+1)
+                                      : (current_row+1) % (max_row+1);  
+
+                        // Highlight new current row
+                        cout->SetCursorPosition(cout, 0, current_row);
+                        cout->SetAttribute(cout, EFI_TEXT_ATTR(HIGHLIGHT_FG_COLOR, HIGHLIGHT_BG_COLOR));
+                        printf_c16(u"%s\r", menu_choices[current_row]);
+
+                        // Reset colors
+                        cout->SetAttribute(cout, EFI_TEXT_ATTR(DEFAULT_FG_COLOR, DEFAULT_BG_COLOR));
+                    }
                     break;
 
                 case SCANCODE_ESC:
