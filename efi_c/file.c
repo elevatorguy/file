@@ -823,7 +823,16 @@ EFI_STATUS calculator(void) {
 
     EFI_STATUS status = EFI_SUCCESS;
 
-    printf_c16(u"ERROR: calculator not implmented yet.");
+    printf_c16(u"How many dimensions?\r\n");
+    UINTN num_dim = 0;
+    if(get_num(&num_dim, 10)) {
+        for(UINTN d = 0; d < num_dim; d++) {
+            UINTN num_elem = 0;
+            printf_c16(u"How many element(s) for dimension %x?\r\n", d);
+            get_num(&num_elem, 10);
+        }
+    }
+    printf_c16(u"\r\nERROR: calculator not implmented yet.");
 
     get_key();
     return status;
