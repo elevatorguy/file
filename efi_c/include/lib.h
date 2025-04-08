@@ -8,7 +8,7 @@
 #include <stdarg.h>
 #include <stdbool.h>
 
-#include "efi.h"
+#include "file.h"
 
 // -----------------
 // Global macros

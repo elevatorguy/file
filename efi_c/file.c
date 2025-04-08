@@ -1,7 +1,7 @@
 #include <stdarg.h>
 
-#include "efi.h"
-#include "efi_lib.h"
+#include "file.h"
+#include "lib.h"
 
 #define arch_header <arch/ARCH/ARCH.h>
 #include arch_header
@@ -823,16 +823,59 @@ EFI_STATUS calculator(void) {
 
     EFI_STATUS status = EFI_SUCCESS;
 
-    printf_c16(u"How many dimensions?\r\n");
-    UINTN num_dim = 0;
-    if(get_num(&num_dim, 10)) {
-        for(UINTN d = 0; d < num_dim; d++) {
+    printf_c16(u"A dimension(s)?\r\n");
+    UINTN A_dim = 0;
+    UINTN A_elem = 0;
+    if(get_num(&A_dim, 10)) {
+        printf_c16(u"\r\n");
+        for(UINTN d = 0; d < A_dim; d++) {
             UINTN num_elem = 0;
-            printf_c16(u"How many element(s) for dimension %x?\r\n", d);
+            printf_c16(u"Element(s) per dimension? (%x)\r\n", d);
             get_num(&num_elem, 10);
+            if(d == 0) {
+                A_elem += num_elem;
+            }
+            else {
+                A_elem *= num_elem;
+            }
+            printf_c16(u"\r\n");
         }
     }
+
+    printf_c16(u"B dimension(s)?\r\n");
+    UINTN B_dim = 0;
+    UINTN B_elem = 0;
+    if(get_num(&B_dim, 10)) {
+        printf_c16(u"\r\n");
+        for(UINTN d = 0; d < B_dim; d++) {
+            UINTN num_elem = 0;
+            printf_c16(u"Element(s) per dimension? (%x)\r\n", d);
+            get_num(&num_elem, 10);
+            if(d == 0) {
+                B_elem += num_elem;
+            }
+            else {
+                B_elem *= num_elem;
+            }
+            printf_c16(u"\r\n");
+        }
+    }
+
+    printf_c16(u"%d-dimensional A of %d elements\r\n%d-dimensional B of %d elements\r\n", A_dim, A_elem, B_dim, B_elem);
+
+    VOID* buffer = NULL;
+    UINTN buf_size = A_elem + B_elem;
+    status = bs->AllocatePool(EfiLoaderData, buf_size, &buffer);
+    if (EFI_ERROR(status)) {
+        error(status, u"of AllocatePool - %d bytes.\r\n", buf_size);
+    }
+    else {
+        printf_c16(u"Success of AllocatePool - %d bytes.\r\n", buf_size);
+    }
+
     printf_c16(u"\r\nERROR: calculator not implmented yet.");
+
+    bs->FreePool(buffer);
 
     get_key();
     return status;

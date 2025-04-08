@@ -5,7 +5,7 @@
 
 #include <stdint.h>
 
-#include "../../../efi_lib.h"
+#include "lib.h"
 
 #define ARCH_COFF_MACHINE 0xaa64    // Machine type bytes for PE Coff Header
 
