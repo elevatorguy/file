@@ -828,6 +828,20 @@ void load_drivers(void) {
     bs->FreePool(driv_file_buf);
 }
 
+CHAR16* print_ipAddress(EFI_IPv4_ADDRESS addr) {
+        return u"<placeholder>";
+}
+
+CHAR16* print_dhcp4_configData(EFI_DHCP4_CONFIG_DATA conf) {
+        return print_ipAddress(conf.ClientAddress);
+}
+CHAR16* print_macAddress(EFI_MAC_ADDRESS mac) {
+        for(int i = 0; i < 32; i++) {
+                mac.Addr[i];
+        }
+        return u"<placeholder>";
+}
+
 // ==================================
 // EFI_SIMPLE_NETWORK_PROTOCOL, etc.
 // ==================================
@@ -1001,18 +1015,18 @@ EFI_STATUS test_network(void) {
         }
         else {
             printf_c16(u"State: %llx\r\n"
-            u"ConfigData: %llx\r\n"
+            u"ConfigData: %s\r\n"
             u"ClientAddress: %llx\r\n"
-            u"ClientMacAddress: %llx\r\n"
+            u"ClientMacAddress: %s\r\n"
             u"ServerAddress: %llx\r\n"
             u"RouterAddress: %llx\r\n"
             u"SubnetMask: %llx\r\n"
             u"LeaseTime: %llx\r\n"
             u"ReplyPacket: %llx\r\n",
             mode.State,
-            mode.ConfigData,
+            print_dhcp4_configData(mode.ConfigData),
             mode.ClientAddress,
-            mode.ClientMacAddress,
+            print_macAddress(mode.ClientMacAddress),
             mode.ServerAddress,
             mode.RouterAddress,
             mode.SubnetMask,
