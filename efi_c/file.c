@@ -1680,9 +1680,16 @@ EFI_STATUS get_memory_map(Memory_Map_Info *mmap) {
     return EFI_SUCCESS;
 }
 
+//TODO
 EFI_STATUS inspect_kernel(void) {
 	cout->ClearScreen(cout);
 	printf_c16(u"Not implemented.\r\n");
+
+        //draw square of sqrt(file_size * 8) @ gop resolution
+        //not sure of upsampling; if needed
+
+        //set bit(s); foreground as one - background as zero
+
 	get_key();
 	return EFI_SUCCESS;
 }
