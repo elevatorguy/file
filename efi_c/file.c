@@ -1680,6 +1680,13 @@ EFI_STATUS get_memory_map(Memory_Map_Info *mmap) {
     return EFI_SUCCESS;
 }
 
+EFI_STATUS inspect_kernel(void) {
+	cout->ClearScreen(cout);
+	printf_c16(u"Not implemented.\r\n");
+	get_key();
+	return EFI_SUCCESS;
+}
+
 // ==========================================
 // Read a file from the basic data partition
 // ==========================================
@@ -2806,6 +2813,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
         u"Print ACPI Tables",
         u"Print EFI Global Variables",
         u"Load Kernel",
+	u"Inspect Kernel",
         u"Change Boot Variables",
         u"Write Disk Image Image To Other Disk",
         u"Install Bootloader & Autoload Kernel",
@@ -2824,6 +2832,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
         print_acpi_tables,
         print_efi_global_variables,
         load_kernel,
+	inspect_kernel,
         change_boot_variables,
         write_to_another_disk,
         install_to_disk
