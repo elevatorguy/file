@@ -61,6 +61,7 @@ EFI_GRAPHICS_OUTPUT_BLT_PIXEL cursor_buffer[] = {
 EFI_GRAPHICS_OUTPUT_BLT_PIXEL save_buffer[8*8] = {0};
 
 bool autoload_kernel = false;   // Autoload kernel instead of main menu?
+bool menu_legend = true; //show
 
 // ====================
 // Set Text Mode
@@ -2763,7 +2764,10 @@ EFI_STATUS write_to_another_disk(void) {
 
 EFI_STATUS placeholder(void) {
     printf_c16(u"Is this a feature?\r\n");
-    get_key();
+    EFI_INPUT_KEY key = get_key();
+    if(key.ScanCode == SCANCODE_DELETE) {
+        menu_legend = !menu_legend;
+    }
     return EFI_SUCCESS;
 }
 
@@ -2882,11 +2886,13 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
         // Set Timer for the timer event to run every 1 second (in 100ns units)
         bs->SetTimer(timer_event, TimerPeriodic, 10000000);
 
-        // Print keybinds at bottom of screen
-        cout->SetCursorPosition(cout, 0, text_rows-3);
-        printf_c16(u"Up/Down Arrow = Move cursor\r\n"
-               u"Enter = Select\r\n"
-               u"Escape = Shutdown");
+        if(menu_legend) {
+            // Print keybinds at bottom of screen
+            cout->SetCursorPosition(cout, 0, text_rows-3);
+            printf_c16(u"Up/Down Arrow = Move cursor\r\n"
+                       u"Enter = Select\r\n"
+                       u"Escape = Shutdown");
+        }
 
         // Print menu choices
         // Highlight first choice as initial choice
