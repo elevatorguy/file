@@ -62,6 +62,7 @@ EFI_GRAPHICS_OUTPUT_BLT_PIXEL save_buffer[8*8] = {0};
 
 bool autoload_kernel = false;   // Autoload kernel instead of main menu?
 bool menu_legend = true; //show
+bool clock_mode = true; //always-on
 
 // ====================
 // Set Text Mode
@@ -2883,8 +2884,10 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
                         (VOID *)&context,
                         &timer_event);
 
-        // Set Timer for the timer event to run every 1 second (in 100ns units)
-        bs->SetTimer(timer_event, TimerPeriodic, 10000000);
+        if(clock_mode) {
+            // Set Timer for the timer event to run every 0.1 second (in 100ns units)
+            bs->SetTimer(timer_event, TimerPeriodic, 1000000);
+        }
 
         if(menu_legend) {
             // Print keybinds at bottom of screen
@@ -2921,6 +2924,17 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
                     static bool status = true;
                     status = !status;
                     cout->EnableCursor(cout, status);
+                    break;
+
+                case SCANCODE_F8:
+                case SCANCODE_PAUSE:
+                    clock_mode = !clock_mode;
+                    if(clock_mode) {
+                        bs->SetTimer(timer_event, TimerPeriodic, 1000000);
+                    }
+                    else {
+                        getting_input = false;
+                    }
                     break;
 
                 case SCANCODE_DELETE: {
