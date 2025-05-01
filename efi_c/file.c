@@ -108,11 +108,13 @@ EFI_STATUS set_text_mode(void) {
 
         UINTN menu_top = cout->Mode->CursorRow, menu_bottom = max_rows;
 
-        // Print keybinds at bottom of screen
-        cout->SetCursorPosition(cout, 0, menu_bottom-3);
-        printf_c16(u"Up/Down Arrow = Move Cursor\r\n"
-               u"Enter = Select\r\n"
-               u"Escape = Go Back");
+        if(menu_legend) {
+            // Print keybinds at bottom of screen
+            cout->SetCursorPosition(cout, 0, menu_bottom-3);
+            printf_c16(u"Up/Down Arrow = Move Cursor\r\n"
+                       u"Enter = Select\r\n"
+                       u"Escape = Go Back");
+        }
 
         cout->SetCursorPosition(cout, 0, menu_top);
         menu_bottom -= 5;   // Bottom of menu will be 2 rows above keybinds
@@ -315,11 +317,13 @@ EFI_STATUS set_graphics_mode(void) {
         UINTN menu_top = cout->Mode->CursorRow, menu_bottom = 0, max_cols;
         cout->QueryMode(cout, cout->Mode->Mode, &max_cols, &menu_bottom);
 
-        // Print keybinds at bottom of screen
-        cout->SetCursorPosition(cout, 0, menu_bottom-3);
-        printf_c16(u"Up/Down Arrow = Move Cursor\r\n"
-               u"Enter = Select\r\n"
-               u"Escape = Go Back");
+        if(menu_legend) {
+            // Print keybinds at bottom of screen
+            cout->SetCursorPosition(cout, 0, menu_bottom-3);
+            printf_c16(u"Up/Down Arrow = Move Cursor\r\n"
+                       u"Enter = Select\r\n"
+                       u"Escape = Go Back");
+        }
 
         cout->SetCursorPosition(cout, 0, menu_top);
         menu_bottom -= 5;   // Bottom of menu will be 2 rows above keybinds
