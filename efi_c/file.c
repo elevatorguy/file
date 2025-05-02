@@ -2794,6 +2794,8 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     // Disable Watchdog Timer
     bs->SetWatchdogTimer(0, 0x10000, 0, NULL);
 
+    cout->SetMode(cout, 2);
+
     // Get current text mode ColsxRows values
     UINTN cols = 0, rows = 0;
     cout->QueryMode(cout, cout->Mode->Mode, &cols, &rows);
