@@ -873,7 +873,7 @@ EFI_STATUS calculator(void) {
         printf_c16(u"Success of AllocatePool - %d bytes.\r\n", buf_size);
     }
 
-    printf_c16(u"\r\nERROR: calculator not implmented yet.");
+    printf_c16(u"\r\nERROR: calculator not implemented yet.");
 
     bs->FreePool(buffer);
 
