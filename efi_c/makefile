@@ -34,12 +34,14 @@ endif
 	-e efi_main 
 
 # Uncomment CC/LDFLAGS for EFI object - clang
-EFICC       = clang -target $(ARCH)-$(MACHINE)-windows 
+EFICC       = icx -target $(ARCH)-$(MACHINE)-windows
 EFI_LDFLAGS = \
 	-nostdlib \
-	-fuse-ld=lld-link \
-	-Wl,-subsystem:efi_application \
-	-Wl,-entry:efi_main
+	-fuse-ld=lld-link
+EFI_LDFLAGS2 = \
+	-link \
+	/subsystem:efi_application \
+	/entry:efi_main
 
 # ELF files
 ELFCC = clang -target $(ARCH)-$(MACHINE)-elf 
@@ -50,14 +52,15 @@ PECC  = $(ARCH)-w64-mingw32-gcc
 PELD  = $(ARCH)-w64-mingw32-ld
 
 # Common CFLAGS
+#todo: verify that the Q the same as not Q
 CFLAGS = \
-	-std=c17 \
-	-MMD \
+	-Qstd=c17 \
+	-QMMD \
 	-Wall \
 	-Wextra \
 	-Wpedantic \
 	-mno-red-zone \
-	-ffreestanding \
+	-Qfreestanding \
 	-fno-stack-protector	# Freestanding programs do not have libc stack protector functions
 
 # Define arch/machine types for #ifdef, etc. use in source files
@@ -114,7 +117,7 @@ endif
 endif
 
 $(EFI_APP): $(EFIOBJ)
-	$(EFICC) $(EFI_LDFLAGS) -o $@ $<
+	$(EFICC) $(EFI_LDFLAGS) $< $(EFI_LDFLAGS2) -out:$@
 
 $(EFIOBJ): $(EFISRC)
 	$(EFICC) $(CFLAGS) -c -o $@ $<
