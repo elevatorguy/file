@@ -13,3 +13,5 @@ Hardware:
 >    [Links to UEFI Specification - Related Documents](https://uefi.org/uefi)
 
 >    [Ethernet - E0017X7.EFI](https://dlcdnets.asus.com/pub/ASUS/mb/04LAN/IntelLAN22.4.16.0_RS2_20170718.zip?model=Z170-A)
+
+https://www.intel.com/content/www/us/en/developer/articles/technical/implementing-micropython-as-a-uefi-test-framework.html
