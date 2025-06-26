@@ -15,3 +15,5 @@ Hardware:
 >    [Ethernet - E0017X7.EFI](https://dlcdnets.asus.com/pub/ASUS/mb/04LAN/IntelLAN22.4.16.0_RS2_20170718.zip?model=Z170-A)
 
 ![file](https://github.com/user-attachments/assets/bfb4fc8d-7faf-45bf-8e47-b395f3a96b94)
+
+[SNLA415](https://ti.com/lit/an/snla415/snla415.pdf)
