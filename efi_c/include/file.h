@@ -265,6 +265,26 @@ typedef struct EFI_SERVICE_BINDING_PROTOCOL {
   EFI_SERVICE_BINDING_DESTROY_CHILD     DestroyChild;
 } EFI_SERVICE_BINDING_PROTOCOL;
 
+typedef struct _EFI_PCI_IO_PROTOCOL {
+    EFI_PCI_IO_PROTOCOL_POLL_IO_MEM        PollMem;
+    EFI_PCI_IO_PROTOCOL_POLL_IO_MEM        PollIo;
+    EFI_PCI_IO_PROTOCOL_ACCESS             Mem;
+    EFI_PCI_IO_PROTOCOL_ACCESS             Io;
+    EFI_PCI_IO_PROTOCOL_CONFIG_ACCESS      Pci;
+    EFI_PCI_IO_PROTOCOL_COPY_MEM           CopyMem;
+    EFI_PCI_IO_PROTOCOL_MAP                Map;
+    EFI_PCI_IO_PROTOCOL_UNMAP              Unmap;
+    EFI_PCI_IO_PROTOCOL_ALLOCATE_BUFFER    AllocateBuffer;
+    EFI_PCI_IO_PROTOCOL_FREE_BUFFER        FreeBuffer;
+    EFI_PCI_IO_PROTOCOL_FLUSH              Flush;
+    EFI_PCI_IO_PROTOCOL_GET_LOCATION       GetLocation;
+    EFI_PCI_IO_PROTOCOL_ATTRIBUTES         Attributes;
+    EFI_PCI_IO_PROTOCOL_GET_BAR_ATTRIBUTES GetBarAttributes;
+    EFI_PCI_IO_PROTOCOL_SET_BAR_ATTRIBUTES SetBarAttributes;
+    UINT64                                 RomSize;
+    VOID*                                  RomImage;
+} EFI_PCI_IO_PROTOCOL;
+
 // EFI_SIMPLE_NETWORK_PROTOCOL
 typedef struct EFI_SIMPLE_NETWORK_PROTOCOL EFI_SIMPLE_NETWORK_PROTOCOL;
 typedef struct {
