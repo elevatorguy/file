@@ -285,6 +285,88 @@ typedef struct _EFI_PCI_IO_PROTOCOL {
     VOID*                                  RomImage;
 } EFI_PCI_IO_PROTOCOL;
 
+typedef enum {
+    EfiPciIoWidthUint8,
+    EfiPciIoWidthUint16,
+    EfiPciIoWidthUint32,
+    EfiPciIoWidthUint64,
+    EfiPciIoWidthFifoUint8,
+    EfiPciIoWidthFifoUint16,
+    EfiPciIoWidthFifoUint32,
+    EfiPciIoWidthFifoUint64,
+    EfiPciIoWidthFillUint8,
+    EfiPciIoWidthFillUint16,
+    EfiPciIoWidthFillUint32,
+    EfiPciIoWidthFillUint64,
+    EfiPciIoWidthMaximum
+} EFI_PCI_IO_PROTOCOL_WIDTH;
+
+#define EFI_PCI_IO_PASS_THROUGH_BAR 0xff
+
+typedef
+EFI_STATUS
+(EFIAPI* EFI_PCI_IO_PROTOCOL_POLL_IO_MEM) (
+  IN EFI_PCI_IO_PROTOCOL*       This,
+  IN EFI_PCI_IO_PROTOCOL_WIDTH  Width,
+  IN UINT8                      BarIndex,
+  IN UINT64                     Offset,
+  IN UINT64                     Mask,
+  IN UINT64                     Value,
+  IN UINT64                     Delay,
+  OUT UINT64*                   Result
+);
+
+typedef
+EFI_STATUS
+(EFIAPI* EFI_PCI_IO_PROTOCOL_IO_MEM) (
+  IN EFI_PCI_IO_PROTOCOL*       This,
+  IN EFI_PCI_IO_PROTOCOL_WIDTH  Width,
+  IN UINT8                      BarIndex,
+  IN UINT64                     Offset,
+  IN UINTN                      Count,
+  IN OUT VOID*                  Buffer
+);
+
+typedef struct {
+  EFI_PCI_IO_PROTOCOL_IO_MEM    Read;
+  EFI_PCI_IO_PROTOCOL_IO_MEM    Write;
+} EFI_PCI_IO_PROTOCOL_ACCESS;
+
+typedef
+EFI_STATUS
+(EFIAPI* EFI_PCI_IO_PROTOCOL_CONFIG) (
+  IN EFI_PCI_IO_PROTOCOL*       This,
+  IN EFI_PCI_IO_PROTOCOL_WIDTH  Width,
+  IN UINT32                     Offset,
+  IN UINTN                      Count,
+  IN OUT VOID*                  Buffer
+);
+
+typedef struct {
+  EFI_PCI_IO_PROTOCOL_CONFIG    Read;
+  EFI_PCI_IO_PROTOCOL_CONFIG    Write;
+} EFI_PCI_IO_PROTOCOL_CONFIG_ACCESS;
+
+#define EFI_PCI_IO_ATTRIBUTE_ISA_MOTHERBOARD_IO   0x0000
+#define EFI_PCI_IO_ATTRIBUTE_ISA_IO               0x0001
+#define EFI_PCI_IO_ATTRIBUTE_VGA_PALETTE_IO       0x0004
+#define EFI_PCI_IO_ATTRIBUTE_VGA_MEMORY           0x0008
+#define EFI_PCI_IO_ATTRIBUTE_VGA_IO               0x0010
+#define EFI_PCI_IO_ATTRIBUTE_IDE_PRIMARY_IO       0x0020
+#define EFI_PCI_IO_ATTRIBUTE_IDE_SECONDARY_IO     0x0040
+#define EFI_PCI_IO_ATTRIBUTE_MEMORY_WRITE_COMBINE 0x0080
+#define EFI_PCI_IO_ATTRIBUTE_IO                   0x0100
+#define EFI_PCI_IO_ATTRIBUTE_MEMORY               0x0200
+#define EFI_PCI_IO_ATTRIBUTE_BUS_MASTER           0x0400
+#define EFI_PCI_IO_ATTRIBUTE_MEMORY_CACHED        0x0800
+#define EFI_PCI_IO_ATTRIBUTE_MEMORY_DISABLE       0x1000
+#define EFI_PCI_IO_ATTRIBUTE_EMBEDDED_DEVICE      0x2000
+#define EFI_PCI_IO_ATTRIBUTE_EMBEDDED_ROM         0x4000
+#define EFI_PCI_IO_ATTRIBUTE_DUAL_ADDRESS_CYCLE   0x8000
+#define EFI_PCI_IO_ATTRIBUTE_ISA_IO_16            0x10000
+#define EFI_PCI_IO_ATTRIBUTE_VGA_PALETTE_IO_16    0x20000
+#define EFI_PCI_IO_ATTRIBUTE_VGA_IO_16            0x40000
+
 // EFI_SIMPLE_NETWORK_PROTOCOL
 typedef struct EFI_SIMPLE_NETWORK_PROTOCOL EFI_SIMPLE_NETWORK_PROTOCOL;
 typedef struct {
