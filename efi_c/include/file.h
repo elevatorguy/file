@@ -367,6 +367,149 @@ typedef struct {
 #define EFI_PCI_IO_ATTRIBUTE_VGA_PALETTE_IO_16    0x20000
 #define EFI_PCI_IO_ATTRIBUTE_VGA_IO_16            0x40000
 
+typedef enum {
+  EfiPciIoOperationBusMasterRead,
+  EfiPciIoOperationBusMasterWrite,
+  EfiPciIoOperationBusMasterCommonBuffer,
+  EfiPciIoOperationBusMaximum
+} EFI_PCI_IO_PROTOCOL_OPERATION;
+
+typedef
+EFI_STATUS
+(EFIAPI* EFI_PCI_IO_PROTOCOL_POLL_IO_MEM) (
+  IN EFI_PCI_IO_PROTOCOL*      This,
+  IN EFI_PCI_IO_PROTOCOL_WIDTH Width,
+  UINT8                        BarIndex,
+  UINT64                       Offset,
+  UINT64                       Mask,
+  UINT64                       Value,
+  UINT64                       Delay,
+  OUT UINT64*                  Result
+);
+
+typedef
+EFI_STATUS
+(EFIAPI* EFI_PCI_IO_PROTOCOL_MEM) (
+  IN EFI_PCI_IO_PROTOCOL*      This,
+  IN EFI_PCI_IO_PROTOCOL_WIDTH Width,
+  IN UINT8                     BarIndex,
+  IN UINT64                    Offset,
+  IN UINTN                     Count,
+  IN OUT VOID*                 Buffer
+);
+
+typedef
+EFI_STATUS
+(EFIAPI* EFI_PCI_IO_PROTOCOL_CONFIG) (
+  IN EFI_PCI_IO_PROTOCOL*      This,
+  IN EFI_PCI_IO_PROTOCOL_WIDTH Width,
+  IN UINT32                    Offset,
+  IN UINTN                     Count,
+  IN OUT VOID*                 Buffer
+);
+
+typedef
+EFI_STATUS
+(EFIAPI* EFI_PCI_IO_PROTOCOL_COPY_MEM) (
+  IN EFI_PCI_IO_PROTOCOL*      This,
+  IN EFI_PCI_IO_PROTOCOL_WIDTH Width,
+  IN UINT8                     DestBarIndex,
+  IN UINT64                    DestOffset,
+  IN UINT8                     SrcBarIndex,
+  IN UINT64                    SrcOffset,
+  IN UINTN                     Count
+);
+
+typedef
+EFI_STATUS
+(EFIAPI* EFI_PCI_IO_PROTOCOL_MAP) (
+  IN EFI_PCI_IO_PROTOCOL*          This,
+  IN EFI_PCI_IO_PROTOCOL_OPERATION Operation,
+  IN VOID*                         HostAddress,
+  IN OUT UINTN*                    NumberOfBytes,
+  OUT EFI_PHYSICAL_ADDRESS*        DeviceAddress,
+  OUT VOID**                       Mapping
+);
+
+typedef
+EFI_STATUS
+(EFIAPI* EFI_PCI_IO_PROTOCOL_UNMAP) (
+  IN EFI_PCI_IO_PROTOCOL*          This,
+  IN VOID*                         Mapping
+);
+
+typedef
+EFI_STATUS
+(EFIAPI* EFI_PCI_IO_PROTOCOL_ALLOCATE_BUFFER) (
+  IN EFI_PCI_IO_PROTOCOL*          This,
+  IN EFI_ALLOCATE_TYPE             Type,
+  IN EFI_MEMORY_TYPE               MemoryType,
+  IN UINTN                         Pages,
+  OUT VOID**                       HostAddress,
+  IN UINT64                        Attributes
+);
+
+typedef
+EFI_STATUS
+(EFIAPI* EFI_PCI_IO_PROTOCOL_FREE_BUFFER) (
+  IN EFI_PCI_IO_PROTOCOL*          This,
+  IN UINTN                         Pages,
+  IN VOID*                         HostAddress
+);
+
+typedef
+EFI_STATUS
+(EFIAPI* EFI_PCI_IO_PROTOCOL_FLUSH) (
+  IN EFI_PCI_IO_PROTOCOL*          This
+);
+
+typedef
+EFI_STATUS
+(EFIAPI* EFI_PCI_IO_PROTOCOL_GET_LOCATION) (
+  IN EFI_PCI_IO_PROTOCOL*          This,
+  OUT UINTN*                       SegmentNumber,
+  OUT UINTN*                       BusNumber,
+  OUT UINTN*                       DeviceNumber,
+  OUT UINTN*                       FunctionNumber
+);
+
+typedef
+EFI_STATUS
+(EFIAPI* EFI_PCI_IO_PROTOCOL_ATTRIBUTES) (
+  IN EFI_PCI_IO_PROTOCOL*                    This,
+  IN EFI_PCI_IO_PROTOCOL_ATTRIBUTE_OPERATION Operation,
+  IN UINT64                                  Attributes,
+  OUT UINT64*                                Result OPTIONAL
+);
+
+typedef enum {
+  EfiPciIoAttributeOperationGet,
+  EfiPciIoAttributeOperationSet,
+  EfiPciIoAttributeOperationEnable,
+  EfiPciIoAttributeOperationDisable,
+  EfiPciIoAttribtueOperationSupported,
+  EfiPciIoAttributeOperationMaximum
+} EFI_PCI_IO_PROTOCOL_ATTRIBUTE_OPERATION;
+
+typedef
+EFI_STATUS
+(EFIAPI* EFI_PCI_IO_PROTOCOL_GET_BAR_ATTRIBUTES) (
+  IN EFI_PCI_IO_PROTOCOL*        This,
+  IN UINT8                       BarIndex,
+  OUT UINT64*                    Supports OPTIONAL,
+  OUT VOID**                     Resources OPTIONAL
+);
+
+typedef
+EFI_STATUS
+(EFIAPI* EFI_PCI_IO_PROTOCOL_SET_BAR_ATTRIBUTES) (
+  IN EFI_PCI_IO_PROTOCOL*       This,
+  IN UINT64                     Attributes,
+  IN UINT8                      BarIndex,
+  IN OUT UINT64*                Offset,
+  IN OUT UINT64*                Length
+);
+
 // EFI_SIMPLE_NETWORK_PROTOCOL
 typedef struct EFI_SIMPLE_NETWORK_PROTOCOL EFI_SIMPLE_NETWORK_PROTOCOL;
 typedef struct {
