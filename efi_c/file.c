@@ -3037,7 +3037,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
                         getting_input = false; 
                     }
                     else if (key.UnicodeChar == u'1') {
-                        UINTN value = 1;
+                        UINTN value = 8;
                         EFI_GUID guid = EFI_GLOBAL_VARIABLE_GUID;
                         UINT32 attr = EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS |
                                       EFI_VARIABLE_RUNTIME_ACCESS;
@@ -3047,7 +3047,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
                             error(status, u"Could not Set new value for BootNext.\r\n");
                     }
                     else if (key.UnicodeChar == u'2') {
-                        UINTN value = 2;
+                        UINTN value = 1;
                         EFI_GUID guid = EFI_GLOBAL_VARIABLE_GUID;
                         UINT32 attr = EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS |
                                       EFI_VARIABLE_RUNTIME_ACCESS;
