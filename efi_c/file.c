@@ -818,12 +818,8 @@ void load_drivers(void) {
 
     status = bs->LoadImage(0, image, NULL, driv_file_buf, buf_size, &driver); //7.4.1
     if(status == EFI_SUCCESS) {
-        printf_c16(u"Success of bs->LoadImage.\r\n");
         status = bs->StartImage(driver, 0, 0);
-        if(status == EFI_SUCCESS) {
-            printf_c16(u"Success of bs->StartImage\r\n");
-        }
-        else {
+        if(status != EFI_SUCCESS) {
             error(status, u"of bs->StartImage\r\n");
         }
     }
@@ -2855,7 +2851,8 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
         write_to_another_disk,
         install_to_disk
     };
-
+    
+    cout->EnableCursor(cout, false);
     load_drivers();
 
     // Connect all controllers found for all handles, to hopefully fix
@@ -2927,7 +2924,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
             // Process input
             switch (key.ScanCode) {
                 case SCANCODE_INSERT:
-                    static bool status = true;
+                    static bool status = false;
                     status = !status;
                     cout->EnableCursor(cout, status);
                     break;
