@@ -1165,6 +1165,8 @@ VOID EFIAPI print_datetime(__attribute__((unused)) IN EFI_EVENT event, IN VOID *
     // Move cursor to print in lower right corner
     cout->SetCursorPosition(cout, context.cols-20, context.rows-1);
 
+    time = adjust(time, utc_offset);
+
     // Print current date/time
     printf_c16(u"%u-%c%u-%c%u %c%u:%c%u:%c%u",
            time.Year, 

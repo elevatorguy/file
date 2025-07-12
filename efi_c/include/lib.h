@@ -2424,3 +2424,99 @@ void set_runtime_address_map(Memory_Map_Info *mmap) {
     if (EFI_ERROR(status)) error(0, u"SetVirtualAddressMap()\r\n");
 }
 
+uint8_t setDayToMax(uint8_t day, uint8_t month) {
+	switch(month) {
+		case 1:
+		{
+			return 31;
+		}
+		case 2:
+		{
+			return 28;
+		}
+		case 3:
+		{
+			return 31;
+		}
+		case 4:
+		{
+			return 30;
+		}
+		case 5:
+		{
+			return 31;
+		}
+		case 6:
+		{
+			return 30;
+		}
+		case 7:
+		{
+			return 31;
+		}
+		case 8:
+		{
+			return 31;
+		}
+		case 9:
+		{
+			return 30;
+		}
+		case 10:
+		{
+			return 31;
+		}
+		case 11:
+		{
+			return 30;
+		}
+		case 12:
+		{
+			return 31;
+		}
+		default:
+		{
+			return 7;
+		}
+	}
+}
+
+EFI_TIME adjust(EFI_TIME t, int8_t h) {
+	uint16_t to_go = 3600*h;
+
+	for(; to_go > 0; to_go--) {
+		if(t.Second > 0) {
+			t.Second = t.Second - 1;
+		}
+		else {
+			t.Second = 59;
+			if(t.Minute > 0) {
+				t.Minute--;
+			}
+			else {
+				t.Minute = 59;
+				if(t.Hour > 0) {
+					t.Hour--;
+				}
+				else {
+					t.Hour = 23;
+					if(t.Day > 1) {
+						t.Day--;
+					}
+					else {
+						t.Day = setDayToMax(t.Day, t.Month);
+						//todo: leap year(s)
+						if(t.Month > 1) {
+							t.Month--;
+						}
+						else {
+							t.Month = 12;
+							t.Year--;
+						}
+					}
+				}
+			}
+		}
+	}
+	return t;
+}
