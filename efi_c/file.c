@@ -63,6 +63,7 @@ EFI_GRAPHICS_OUTPUT_BLT_PIXEL save_buffer[8*8] = {0};
 bool autoload_kernel = false;   // Autoload kernel instead of main menu?
 bool menu_legend = true; //show
 bool clock_mode = true; //always-on
+int8_t utc_offset = 0;
 
 // ====================
 // Set Text Mode
@@ -3032,6 +3033,16 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
 
                         // Will leave input loop and reprint main menu
                         getting_input = false; 
+                    }
+                    else if(key.UnicodeChar == '-') {
+                        if(clock_mode) {
+                            utc_offset--;
+                        }
+                    }
+                    else if(key.UnicodeChar == '+') {
+                        if(clock_mode) {
+                            utc_offset++;
+                        }
                     }
                     else if (key.UnicodeChar == u'1') {
                         UINTN value = 8;
