@@ -2482,41 +2482,77 @@ uint8_t setDayToMax(uint8_t day, uint8_t month) {
 }
 
 EFI_TIME adjust(EFI_TIME t, int8_t h) {
-	uint16_t to_go = 3600*h;
-
-	for(; to_go > 0; to_go--) {
-		if(t.Second > 0) {
-			t.Second = t.Second - 1;
-		}
-		else {
-			t.Second = 59;
-			if(t.Minute > 0) {
-				t.Minute--;
-			}
-			else {
-				t.Minute = 59;
-				if(t.Hour > 0) {
-					t.Hour--;
-				}
-				else {
-					t.Hour = 23;
-					if(t.Day > 1) {
-						t.Day--;
-					}
-					else {
-						t.Day = setDayToMax(t.Day, t.Month);
-						//todo: leap year(s)
-						if(t.Month > 1) {
-							t.Month--;
-						}
-						else {
-							t.Month = 12;
-							t.Year--;
-						}
-					}
-				}
-			}
-		}
-	}
+	bool east = (h > 0);
+    uint16_t to_go = east ? 3600*h : -3600*h;
+    for(; to_go > 0; to_go--) {
+        if(!east) {
+            if(t.Second > 59) {
+                t.Second = t.Second - 1;
+            }
+            else {
+                t.Second = 59;
+                if(t.Minute > 0) {
+                    t.Minute--;
+                }
+                else {
+                    t.Minute = 59;
+                    if(t.Hour > 0) {
+                        t.Hour--;
+                    }
+                    else {
+                        t.Hour = 23;
+                        if(t.Day > 1) {
+                            t.Day--;
+                        }
+                        else {
+                            t.Day = setDayToMax(t.Day, t.Month);
+                            //todo: leap year(s)
+                            if(t.Month > 1) {
+                                t.Month--;
+                            }
+                            else {
+                                t.Month = 12;
+                                t.Year--;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        else {
+            if(t.Second < 59) {
+                t.Second = t.Second + 1;
+            }
+            else {
+                t.Second = 0;
+                if(t.Minute < 59) {
+                    t.Minute++;
+                }
+                else {
+                    t.Minute = 0;
+                    if(t.Hour < 23) {
+                        t.Hour++;
+                    }
+                    else {
+                        t.Hour = 0;
+                        if(t.Day < setDayToMax(t.Day, t.Month)) {
+                            t.Day++;
+                        }
+                        else {
+                            t.Day = 1;
+                            //todo: leap year(s)
+                            if(t.Month < 12) {
+                                t.Month++;
+                            }
+                            else {
+                                t.Month = 1;
+                                t.Year++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 	return t;
 }
