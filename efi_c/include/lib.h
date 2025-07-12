@@ -2483,10 +2483,10 @@ uint8_t setDayToMax(uint8_t day, uint8_t month) {
 
 EFI_TIME adjust(EFI_TIME t, int8_t h) {
 	bool east = (h > 0);
-    uint16_t to_go = east ? 3600*h : -3600*h;
+    uint16_t to_go = east ? (3600*h) : (-3600*h);
     for(; to_go > 0; to_go--) {
         if(!east) {
-            if(t.Second > 59) {
+            if(t.Second > 0) {
                 t.Second = t.Second - 1;
             }
             else {
