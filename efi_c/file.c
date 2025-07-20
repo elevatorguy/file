@@ -34,7 +34,7 @@ int _fltused = 0;   // If using floating point code & lld-link, need to define t
 // -----------------
 // These external global vars are defined in efi_lib.h
 extern EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *cout;   // Console output
-extern EFI_SIMPLE_TEXT_INPUT_PROTOCOL  *cin;    // Console input
+extern EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *cin;    // Console input
 extern EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *cerr;   // Console output - stderr
 extern EFI_BOOT_SERVICES    *bs;                // Boot services
 extern EFI_RUNTIME_SERVICES *rs;                // Runtime services
@@ -673,8 +673,10 @@ EFI_STATUS test_mouse(void) {
         bs->WaitForEvent(num_protocols, events, &index);
         if (input_protocols[index].type == CIN) {
             // Keypress
+            EFI_KEY_DATA data;
             EFI_INPUT_KEY key;
-            cin->ReadKeyStroke(cin, &key);
+            cin->ReadKeyStrokeEx(cin, &data);
+            key = data.Key;
 
             if (key.ScanCode == SCANCODE_ESC) {
                 // ESC Key, leave and go back to main menu
@@ -2781,8 +2783,13 @@ EFI_STATUS placeholder(void) {
 EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     // Initialize global variables
     init_global_variables(ImageHandle, SystemTable);
+    UINT8 cinInit = EFI_TOGGLE_STATE_VALID | EFI_NUM_LOCK_ACTIVE;
 
     // Reset Console Inputs/Outputs
+    EFI_STATUS r = cin->SetState(cin, &cinInit);
+    if(r != EFI_SUCCESS) {
+        error(r, u"of SetState\r\n");
+    }
     cin->Reset(cin, FALSE);
     cout->Reset(cout, FALSE);
     cout->Reset(cerr, FALSE);

@@ -231,7 +231,7 @@ typedef struct {
 // Global variables
 // -----------------
 EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *cout = NULL;   // Console output
-EFI_SIMPLE_TEXT_INPUT_PROTOCOL  *cin  = NULL;   // Console input
+EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *cin  = NULL;   // Console input
 EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *cerr = NULL;   // Console output - stderr
 
 EFI_BOOT_SERVICES    *bs = NULL;                // Boot services
@@ -261,11 +261,13 @@ void init_global_variables(EFI_HANDLE handle, EFI_SYSTEM_TABLE *systable) {
 // ====================
 EFI_INPUT_KEY get_key(void) {
     EFI_EVENT events[1] = { cin->WaitForKey };
+    EFI_KEY_DATA data = {0};
     EFI_INPUT_KEY key = {0};
     UINTN index = 0;
 
     bs->WaitForEvent(1, events, &index);
-    cin->ReadKeyStroke(cin, &key);
+    cin->ReadKeyStrokeEx(cin, &data);
+    key = data.Key;
     return key;
 }
 

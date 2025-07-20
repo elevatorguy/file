@@ -916,14 +916,14 @@ typedef struct EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL {
     SIMPLE_TEXT_OUTPUT_MODE      *Mode;
 } EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL;
 
-// EFI_SIMPLE_TEXT_INPUT_PROTOCOL
-typedef struct EFI_SIMPLE_TEXT_INPUT_PROTOCOL EFI_SIMPLE_TEXT_INPUT_PROTOCOL;
+// EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL
+typedef struct EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL;
 
-// EFI_INPUT_RESET: UEFI Spec 2.10 section 12.3.2
+// EFI_INPUT_RESET: UEFI Spec 2.10 section 12.2.2
 typedef 
 EFI_STATUS
-(EFIAPI *EFI_INPUT_RESET) (
-    IN EFI_SIMPLE_TEXT_INPUT_PROTOCOL *This,
+(EFIAPI *EFI_INPUT_RESET_EX) (
+    IN EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL *This,
     IN BOOLEAN                        ExtendedVerification
 );
 
@@ -933,20 +933,48 @@ typedef struct {
     CHAR16 UnicodeChar;
 } EFI_INPUT_KEY;
 
-// EFI_INPUT_RESET: UEFI Spec 2.10 section 12.3.2
+typedef UINT8 EFI_KEY_TOGGLE_STATE;
+
+#define EFI_TOGGLE_STATE_VALID 0x80
+#define EFI_KEY_STATE_EXPOSED  0x40
+#define EFI_SCROLL_LOCK_ACTIVE 0x01
+#define EFI_NUM_LOCK_ACTIVE    0x02
+#define EFI_CAPS_LOCK_ACTIVE   0x04
+
+typedef struct EFI_KEY_STATE {
+    UINT32               KeyShiftState;
+    EFI_KEY_TOGGLE_STATE KeyToggleState;
+} EFI_KEY_STATE;
+
+typedef struct {
+    EFI_INPUT_KEY Key;
+    EFI_KEY_STATE KeyState;
+} EFI_KEY_DATA;
+
+// EFI_INPUT_RESET: UEFI Spec 2.10 section 12.2.3
 typedef 
 EFI_STATUS
-(EFIAPI *EFI_INPUT_READ_KEY) (
-    IN EFI_SIMPLE_TEXT_INPUT_PROTOCOL *This,
-    OUT EFI_INPUT_KEY                 *Key
+(EFIAPI *EFI_INPUT_READ_KEY_EX) (
+    IN EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL *This,
+    OUT EFI_KEY_DATA                     *Key
 );
 
-// EFI_SIMPLE_TEXT_INPUT_PROTOCOL: UEFI Spec 2.10 section 12.3.1
-typedef struct EFI_SIMPLE_TEXT_INPUT_PROTOCOL {
-    EFI_INPUT_RESET    Reset;
-    EFI_INPUT_READ_KEY ReadKeyStroke;
-    EFI_EVENT          WaitForKey;
-} EFI_SIMPLE_TEXT_INPUT_PROTOCOL;
+typedef
+EFI_STATUS
+(EFIAPI *EFI_SET_STATE) (
+    IN EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL *This,
+    IN EFI_KEY_TOGGLE_STATE              *KeyToggleState
+);
+
+// EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL: UEFI Spec 2.10 section 12.2.1
+typedef struct EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL {
+    EFI_INPUT_RESET_EX              Reset;
+    EFI_INPUT_READ_KEY_EX           ReadKeyStrokeEx;
+    EFI_EVENT                       WaitForKey;
+    EFI_SET_STATE                   SetState;
+    VOID*                           RegisterKeyNotify;
+    VOID*                           UnregisterKeyNotify;
+} EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL;
 
 // EFI_SIMPLE_POINTER_PROTOCOL
 typedef struct EFI_SIMPLE_POINTER_PROTOCOL EFI_SIMPLE_POINTER_PROTOCOL;
@@ -2295,7 +2323,7 @@ typedef struct {
     CHAR16                          *FirmwareVendor;
     UINT32                          FirmwareRevision;
     EFI_HANDLE                      ConsoleInHandle;
-    EFI_SIMPLE_TEXT_INPUT_PROTOCOL  *ConIn;
+    EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL  *ConIn;
     EFI_HANDLE                      ConsoleOutHandle;
     EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL *ConOut;
     EFI_HANDLE                      StandardErrorHandle;
