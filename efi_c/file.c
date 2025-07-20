@@ -2783,17 +2783,17 @@ EFI_STATUS placeholder(void) {
 EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     // Initialize global variables
     init_global_variables(ImageHandle, SystemTable);
-    UINT8 cinInit = EFI_TOGGLE_STATE_VALID | EFI_NUM_LOCK_ACTIVE;
+    UINT8 cinInit = EFI_TOGGLE_STATE_VALID | EFI_NUM_LOCK_ACTIVE | EFI_SCROLL_LOCK_ACTIVE | EFI_CAPS_LOCK_ACTIVE;
 
     // Reset Console Inputs/Outputs
+    cin->Reset(cin, FALSE);
+    cout->Reset(cout, FALSE);
+    cout->Reset(cerr, FALSE);
     EFI_STATUS r = cin->SetState(cin, &cinInit);
     if(r != EFI_SUCCESS) {
         error(r, u"of SetState\r\n");
     }
-    cin->Reset(cin, FALSE);
-    cout->Reset(cout, FALSE);
-    cout->Reset(cerr, FALSE);
-
+    
     // Set text colors - foreground, background
     cout->SetAttribute(cout, EFI_TEXT_ATTR(DEFAULT_FG_COLOR, DEFAULT_BG_COLOR));
 
