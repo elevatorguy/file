@@ -1419,12 +1419,7 @@ EFI_STATUS print_block_io_partitions(void) {
         }
 
         // Print Block IO Media Info for this Disk/partition
-        if (last_media_id != biop->Media->MediaId) {
-            last_media_id = biop->Media->MediaId;   
-            printf_c16(u"Media ID: %u %s\r\n", 
-                   last_media_id, 
-                   (last_media_id == this_image_media_id ? u"(Disk Image)" : u""));
-        }
+        printf_c16(u"Media ID: %u\r\n", biop->Media->MediaId);
 
         if (biop->Media->LastBlock == 0) {
             // Only really care about partitions/disks above 1 block in size
