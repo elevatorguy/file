@@ -2431,7 +2431,7 @@ EFI_STATUS change_boot_variables(void) {
         }
 
         // Allow user to change values
-        printf_c16(u"Press '1' to change BootOrder, '2' to change BootNext, or other to go back...");
+        printf_c16(u"Press '1' to change BootOrder, '2' to change BootNext, '3' to add or other to go back...");
         EFI_INPUT_KEY key = get_key();
         if (key.UnicodeChar == u'1') {
             // Change BootOrder - set new array of UINT16 values
@@ -2468,6 +2468,8 @@ EFI_STATUS change_boot_variables(void) {
                     error(status, u"Could not Set new value for BootNext.\r\n");
             }
 
+        } else if (key.UnicodeChar == u'3') {
+            printf_c16(u"\r\nNot implemented.");
         } else {
             bs->FreePool(var_name_buf);
             break;
