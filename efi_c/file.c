@@ -61,7 +61,7 @@ EFI_GRAPHICS_OUTPUT_BLT_PIXEL cursor_buffer[] = {
 EFI_GRAPHICS_OUTPUT_BLT_PIXEL save_buffer[8*8] = {0};
 
 bool autoload_kernel = false;   // Autoload kernel instead of main menu?
-bool menu_legend = true;
+bool menu_legend = false;
 bool clock_mode = true;
 int8_t utc_offset = -5;
 
