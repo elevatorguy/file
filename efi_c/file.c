@@ -62,7 +62,7 @@ EFI_GRAPHICS_OUTPUT_BLT_PIXEL save_buffer[8*8] = {0};
 
 bool autoload_kernel = false;   // Autoload kernel instead of main menu?
 bool menu_legend = false;
-bool clock_mode = true;
+bool clock_mode = false;
 int8_t utc_offset = -5;
 
 // ====================
@@ -1687,10 +1687,29 @@ EFI_STATUS inspect_kernel(void) {
 	cout->ClearScreen(cout);
 	printf_c16(u"Not implemented.\r\n");
 
+    // Get kernel file from data partition on disk 
+    UINTN file_size = 0;
+    VOID *disk_buffer = read_data_partition_file_to_buffer("kernel", false, &file_size);
+    if (!disk_buffer) {
+        error(0, u"Could not find or read kernel file to buffer\r\n");
+        goto cleanup;
+    }
+
+    UINT8* buffer = disk_buffer;
+    for(UINTN i = 0; i < file_size; i++) {
+        printf_c16(u"%hhx ",buffer[i]);
+        if(i % 100 == 0) {
+            printf_c16(u"\r\n");
+        }
+    }
+
         //draw square of sqrt(file_size * 8) @ gop resolution
         //not sure of upsampling; if needed
 
         //set bit(s); foreground as one - background as zero
+
+    cleanup:
+    bs->FreePool(disk_buffer);
 
 	get_key();
 	return EFI_SUCCESS;
@@ -2800,7 +2819,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     // Disable Watchdog Timer
     bs->SetWatchdogTimer(0, 0x10000, 0, NULL);
 
-    cout->SetMode(cout, 2);
+    cout->SetMode(cout, 3);
 
     // Get current text mode ColsxRows values
     UINTN cols = 0, rows = 0;
@@ -3054,7 +3073,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
                         }
                     }
                     else if (key.UnicodeChar == u'1') {
-                        UINTN value = 8;
+                        UINTN value = 0;
                         EFI_GUID guid = EFI_GLOBAL_VARIABLE_GUID;
                         UINT32 attr = EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS |
                                       EFI_VARIABLE_RUNTIME_ACCESS;
@@ -3074,7 +3093,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
                             error(status, u"Could not Set new value for BootNext.\r\n");
                     }
                     else if (key.UnicodeChar == u'3') {
-                        UINTN value = 0;
+                        UINTN value = 8;
                         EFI_GUID guid = EFI_GLOBAL_VARIABLE_GUID;
                         UINT32 attr = EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS |
                                       EFI_VARIABLE_RUNTIME_ACCESS;
