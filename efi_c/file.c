@@ -1697,10 +1697,8 @@ EFI_STATUS get_memory_map(Memory_Map_Info *mmap) {
     return EFI_SUCCESS;
 }
 
-//TODO
 EFI_STATUS inspect_kernel(void) {
 	cout->ClearScreen(cout);
-	printf_c16(u"Not implemented.\r\n");
 
     // Get kernel file from data partition on disk 
     UINTN file_size = 0;
@@ -1712,16 +1710,15 @@ EFI_STATUS inspect_kernel(void) {
 
     UINT8* buffer = disk_buffer;
     for(UINTN i = 0; i < file_size; i++) {
-        printf_c16(u"%hhx ",buffer[i]);
-        if(i % 100 == 0) {
+        if(cout->Mode->CursorColumn >= (text_cols-1)) {
             printf_c16(u"\r\n");
         }
+        if(cout->Mode->CursorRow == (text_rows-1)) {
+            get_key();   
+            cout->ClearScreen(cout);            
+        }
+        printf_c16(u"%hhx ",buffer[i]);
     }
-
-        //draw square of sqrt(file_size * 8) @ gop resolution
-        //not sure of upsampling; if needed
-
-        //set bit(s); foreground as one - background as zero
 
     cleanup:
     bs->FreePool(disk_buffer);
