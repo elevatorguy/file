@@ -2356,7 +2356,7 @@ void *mmap_allocate_pages(Memory_Map_Info *mmap, UINTN pages) {
 // Identity map a page of memory, virtual = physical address
 // ===========================================================
 extern void arch_map_page(uint64_t physical_address, uint64_t virtual_address, Memory_Map_Info *mmap);
-
+#define ARCH x86_64
 void identity_map_page(UINTN address, Memory_Map_Info *mmap) {
     arch_map_page(address, address, mmap);
 }
