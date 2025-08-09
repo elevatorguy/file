@@ -76,7 +76,7 @@ noreturn void EFIAPI kmain(Kernel_Parms *kargs) {
     }
 
     // Uncomment if qemu/hardware works fine with shutdown
-    //kargs->RuntimeServices->ResetSystem(EfiResetShutdown, EFI_SUCCESS, 0, NULL);
+    kargs->RuntimeServices->ResetSystem(EfiResetShutdown, EFI_SUCCESS, 0, NULL);
 
     // Uncomment if qemu/hardware works does not work with shutdown;
     // Infinite loop, do not return back to UEFI,

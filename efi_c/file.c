@@ -3085,34 +3085,15 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
                         }
                     }
                     else if (key.UnicodeChar == u'1') {
-                        UINTN value = 0;
-                        EFI_GUID guid = EFI_GLOBAL_VARIABLE_GUID;
-                        UINT32 attr = EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS |
-                                      EFI_VARIABLE_RUNTIME_ACCESS;
-
-                        status = rs->SetVariable(u"BootNext", &guid, attr, 2, &value);
-                        if (EFI_ERROR(status)) 
-                            error(status, u"Could not Set new value for BootNext.\r\n");
+                      //set bootnext to first number in bootorder
+                      
+                      //TODO
                     }
                     else if (key.UnicodeChar == u'2') {
-                        UINTN value = 0x10;
-                        EFI_GUID guid = EFI_GLOBAL_VARIABLE_GUID;
-                        UINT32 attr = EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS |
-                                      EFI_VARIABLE_RUNTIME_ACCESS;
-
-                        status = rs->SetVariable(u"BootNext", &guid, attr, 2, &value);
-                        if (EFI_ERROR(status)) 
-                            error(status, u"Could not Set new value for BootNext.\r\n");
+                      //set bootnext to second number in bootorder
                     }
                     else if (key.UnicodeChar == u'3') {
-                        UINTN value = 8;
-                        EFI_GUID guid = EFI_GLOBAL_VARIABLE_GUID;
-                        UINT32 attr = EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS |
-                                      EFI_VARIABLE_RUNTIME_ACCESS;
-
-                        status = rs->SetVariable(u"BootNext", &guid, attr, 2, &value);
-                        if (EFI_ERROR(status)) 
-                            error(status, u"Could not Set new value for BootNext.\r\n");
+                      //set bootnext to third number in bootorder
                     }
                     break;
             }
