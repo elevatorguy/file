@@ -15,7 +15,7 @@ QEMU_SCRIPT = ./qemu_$(ARCH).sh
 endif
 
 # Uncomment disk image program & shell script 
-DISK_IMG_PGM = write_gpt
+DISK_IMG_PGM = file.exe
 
 DISK_IMG_FOLDER = ../UEFI-GPT-image-creator/
 
@@ -43,45 +43,17 @@ EFI_LDFLAGS2 = \
 	/subsystem:efi_application \
 	/entry:efi_main
 
-# ELF files
-ELFCC = clang -target $(ARCH)-$(MACHINE)-elf 
-ELFLD = ld.lld
-
 # PE32+ files
 PECC  = $(ARCH)-w64-mingw32-gcc
 PELD  = $(ARCH)-w64-mingw32-ld
 
-# Common CFLAGS
-#todo: verify that the Q the same as not Q
-CFLAGS = \
-	-Qstd=c17 \
-	-QMMD \
-	-Wall \
-	-Wextra \
-	-Wpedantic \
-	-mno-red-zone \
-	-Qfreestanding \
-	-fno-stack-protector	# Freestanding programs do not have libc stack protector functions
-
-# Define arch/machine types for #ifdef, etc. use in source files
-# -I include for "#include <arch/ARCH/ARCH.h>" or other files under top level "include" directory
-CFLAGS += -D ARCH=$(ARCH) -D MACHINE=$(MACHINE) -I include
-
 KERNEL_SRC     = kernel.c
-KERNEL_CFLAGS  = $(CFLAGS) -fPIE
-KERNEL_LDFLAGS = -e kmain -nostdlib -pie
 
 EFISRC  = file.c
 EFIOBJ  = $(EFISRC:%.c=%_$(ARCH).o)
 DEPENDS = $(EFIOBJ:.o=.d) $(KERNEL_SRC:.c=.d)
 
-# EFI application to use, should automatically boot from UEFI/OVMF if in /EFI/BOOT/ folder in 
-#  the EFI System Partition (ESP)
-ifeq ($(ARCH), x86_64) 
-EFI_APP = BOOTX64.EFI
-else ifeq ($(ARCH), aarch64) 
-EFI_APP = BOOTAA64.EFI
-endif
+EFI_APP = FILE.EFI
 
 # Uncomment kernel binary format to build
 KERNEL = kernel.elf    # ELF64 PIE kernel binary
@@ -93,47 +65,66 @@ FONT = ter-132n.psf	# PSF2 Bitmapped Font: Terminus 16x32 ISO8859-1
 
 # Add kernel binary to new disk image
 ADD_KERNEL = \
-	cd $(DISK_IMG_FOLDER); \
-	./$(DISK_IMG_PGM) -ae /EFI/BOOT/ ../efi_c/$(EFI_APP) \
+	cd $(DISK_IMG_FOLDER) \
+	$(DISK_IMG_PGM) -ae /EFI/BOOT/ ../efi_c/$(EFI_APP) \
 					  -ad ../efi_c/$(KERNEL) ../efi_c/$(FONT);
 
-all: $(EFI_APP)
+all: $(EFI_APP) $(KERNEL)
 
 $(DISK_IMG_FOLDER)/$(DISK_IMG_PGM):
 	cd $(DISK_IMG_FOLDER) && $(MAKE) 
 
-# Pad out AARCH64 ovmf file to 64MiB for QEMU to work correctly if wanting to use pflash,
-#   the -bios option otherwise seems fine with the default size.
-# Not sure what all windows has, if not dd. Maybe fsutil works?
-$(OVMF): 
-ifeq ($(ARCH), aarch64)
-ifeq ($(HOST_OS), Linux)
-	dd if=/dev/zero of=$@ bs=1M count=64 
-	dd if=QEMU_EFI_AARCH64.fd of=$@ bs=1M conv=notrunc
-else
-	cp QEMU_EFI_AARCH64.fd $@
-	fsutil file seteof $@ 67108864
-endif
-endif
+# Common CFLAGS
+#todo: verify that the Q the same as not Q
+QFLAGS = \
+	-Qstd=c17 \
+	-QMMD \
+	-Wall \
+	-Wextra \
+	-Wpedantic \
+	-mno-red-zone \
+	-Qfreestanding \
+	-fno-stack-protector	# Freestanding programs do not have libc stack protector functions
+
+CFLAGS = \
+	-std=c17 \
+	-MMD \
+	-Wall \
+	-Wextra \
+	-Wpedantic \
+	-mno-red-zone \
+	-ffreestanding \
+	-fno-stack-protector	# Freestanding programs do not have libc stack protector functions
+
+# Define arch/machine types for #ifdef, etc. use in source files
+# -I include for "#include <arch/ARCH/ARCH.h>" or other files under top level "include" directory
+CFLAGS += -D ARCH=$(ARCH) -D MACHINE=$(MACHINE) -I include
+QFLAGS += -D ARCH=$(ARCH) -D MACHINE=$(MACHINE) -I include
+
+KERNEL_CFLAGS  = $(CFLAGS) -fPIE
+KERNEL_LDFLAGS = -e kmain -nostdlib -pie
+
+# ELF files
+#ELFCC = icx -target $(ARCH)-$(MACHINE)-elf 
+ELFCC = clang -target $(ARCH)-$(MACHINE)-elf
+ELFLD = ld.lld
 
 $(EFI_APP): $(EFIOBJ)
 	$(EFICC) $(EFI_LDFLAGS) $< $(EFI_LDFLAGS2) -out:$@
 
 $(EFIOBJ): $(EFISRC)
-	$(EFICC) $(CFLAGS) -c -o $@ $<
+	$(EFICC) $(QFLAGS) -c -o $@ $<
 
 kernel.elf: $(KERNEL_SRC)
 	$(ELFCC) $(KERNEL_CFLAGS) $(KERNEL_LDFLAGS) -o $@ $<
-	$(ADD_KERNEL)
-
+   
 kernel.pe: $(KERNEL_SRC)
 	$(PECC) $(KERNEL_CFLAGS) $(KERNEL_LDFLAGS) -o $@ $<
 	$(ADD_KERNEL)
 
 kernel.binelf: $(KERNEL_SRC)
-	$(ELFCC) -c $(KERNEL_CFLAGS) -o kernel.o $<
-	$(ELFLD) $(KERNEL_LDFLAGS) -Tkernel.ld --oformat binary -o $@ kernel.o 
-	$(ADD_KERNEL)
+	$(ELFCC) -c $(KERNEL_CFLAGS) /Fo kernel.obj $<
+	$(ELFLD) $(KERNEL_LDFLAGS) -Tkernel.ld --oformat binary -o $@ kernel.obj
 
 kernel.binpe: $(KERNEL_SRC)
 	$(PECC) -c $(KERNEL_CFLAGS) -o kernel.o $<
