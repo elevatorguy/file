@@ -2037,7 +2037,7 @@ EFI_STATUS print_memory_map(void) {
         }
     }
 
-    printf_c16(u"\r\nUsable memory: %u / %u MiB / %u GiB\r\n",
+    printf_c16(u"\r\nUsable memory: %llu / %u MiB / %u GiB\r\n",
             usable_bytes, usable_bytes / (1024 * 1024), usable_bytes / (1024 * 1024 * 1024));
 
     // Free allocated buffer for memory map
