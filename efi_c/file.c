@@ -2517,6 +2517,112 @@ EFI_STATUS change_boot_variables(void) {
     return EFI_SUCCESS;
 }
 
+EFI_STATUS change_boot_next(uint8_t position) { 
+    // Get Device Path to Text protocol to print Load Option device/file paths
+    EFI_STATUS status = EFI_SUCCESS;
+    EFI_GUID dpttp_guid = EFI_DEVICE_PATH_TO_TEXT_PROTOCOL_GUID;
+    EFI_DEVICE_PATH_TO_TEXT_PROTOCOL *dpttp;
+    status = bs->LocateProtocol(&dpttp_guid, NULL, (VOID **)&dpttp);
+    if (EFI_ERROR(status)) {
+        error(status, u"Could not locate Device Path To Text Protocol.\r\n");
+        return status;
+    }
+
+    UINT32 boot_order_attributes = 0;
+
+    UINTN var_name_size = 0;
+    CHAR16 *var_name_buf = 0;
+    EFI_GUID vendor_guid = {0};
+
+    var_name_size = 2;
+    status = bs->AllocatePool(EfiLoaderData, var_name_size, (VOID **)&var_name_buf);
+    if (EFI_ERROR(status)) {
+        error(status, u"Could not allocate 2 bytes...\r\n");
+        return status;
+    }
+
+    // Set variable name to point to initial single null byte, to start off call to get list of
+    //   variable names
+    *var_name_buf = u'\0';
+
+    status = rs->GetNextVariableName(&var_name_size, var_name_buf, &vendor_guid);
+    while (status != EFI_NOT_FOUND) {   // End of list
+        if (status == EFI_BUFFER_TOO_SMALL) {
+            // Reallocate larger buffer for variable name
+            CHAR16 *temp_buf = NULL;
+            status = bs->AllocatePool(EfiLoaderData, var_name_size, (VOID **)&temp_buf);
+            if (EFI_ERROR(status)) {
+                error(status, u"Could not allocate %u bytes of memory for next variable name.\r\n",
+                              var_name_size);
+                return status;
+            }
+            
+            strcpy_c16(temp_buf, var_name_buf);  // Copy old buffer to new buffer
+            bs->FreePool(var_name_buf);          // Free old buffer
+            var_name_buf = temp_buf;             // Set new buffer
+
+            status = rs->GetNextVariableName(&var_name_size, var_name_buf, &vendor_guid);
+            continue;
+        }
+
+        if (!memcmp(var_name_buf, u"Boot", 8)) {
+            EFI_STATUS status;
+            // Get variable value
+            UINT32 attributes = 0;
+            UINTN data_size = 0;
+            VOID *data = NULL;
+
+            // Call first with 0 data size to get actual size needed
+            rs->GetVariable(var_name_buf, &vendor_guid, &attributes, &data_size, NULL);
+
+            status = bs->AllocatePool(EfiLoaderData, data_size, (VOID **)&data);
+            if (EFI_ERROR(status)) {
+                error(status, u"Could not allocate %u bytes of memory for GetVariable().\r\n",
+                              data_size);
+                goto cleanup;
+            }
+
+            // Get actual data now with correct size
+            rs->GetVariable(var_name_buf, &vendor_guid, &attributes, &data_size, data);
+            if (data_size == 0) goto next;  // Skip this one if no data
+
+            if (!memcmp(var_name_buf, u"BootOrder", 18)) {
+                boot_order_attributes = attributes; // Use if user sets new BootOrder value
+
+                UINT16* p = data;
+
+                for (UINTN i = 0; i < data_size / 2; i++) {
+                    if(position == (i+1)) {
+                        // Change BootNext value - set new UINT16
+                        UINTN value = *p;
+                        EFI_GUID guid = EFI_GLOBAL_VARIABLE_GUID;
+                        UINT32 attr = EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS |
+                                      EFI_VARIABLE_RUNTIME_ACCESS;
+
+                        status = rs->SetVariable(u"BootNext", &guid, attr, 2, &value);
+                        if (EFI_ERROR(status)) 
+                            error(status, u"Could not Set new value for BootNext.\r\n");
+                    }
+                    *p++;
+                }
+
+                goto next;
+            }
+
+            next:
+            bs->FreePool(data);
+        }
+
+        status = rs->GetNextVariableName(&var_name_size, var_name_buf, &vendor_guid);
+    }
+
+    cleanup:
+    // Free buffers when done
+    bs->FreePool(var_name_buf);
+
+    return EFI_SUCCESS;
+}
+
 // =================================================================
 // "Install" this disk image/bootloader, by creating a new 
 //    file marking it as installed. This file existing on
@@ -3085,15 +3191,13 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
                         }
                     }
                     else if (key.UnicodeChar == u'1') {
-                      //set bootnext to first number in bootorder
-                      
-                      //TODO
+                      change_boot_next(1);
                     }
                     else if (key.UnicodeChar == u'2') {
-                      //set bootnext to second number in bootorder
+                      change_boot_next(2);
                     }
                     else if (key.UnicodeChar == u'3') {
-                      //set bootnext to third number in bootorder
+                      change_boot_next(3);
                     }
                     break;
             }
