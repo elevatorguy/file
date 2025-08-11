@@ -57,7 +57,7 @@ noreturn void EFIAPI kmain(Kernel_Parms *kargs) {
     x = y = 0;  // Reset to 0,0 position
     Bitmap_Font *font1 = &kargs->fonts[0];
     Bitmap_Font *font2 = &kargs->fonts[1];
-    print_string("Hello, kernel bitmap font world! (USB)", font1);
+    print_string("Hello, kernel bitmap font world!", font1); //TODO: read chapter 10
     print_string("\r\nFont 1 Name: ", font1);
     print_string(font1->name, font1);
     print_string("\r\nFont 2 Name: ", font2);
