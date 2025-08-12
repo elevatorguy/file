@@ -2500,11 +2500,30 @@ EFI_STATUS change_boot_variables(void) {
             }
 
         } else if (key.UnicodeChar == u'3') {
-            printf_c16(u"\r\nNot implemented.");
+            printf_c16(u"\r\nNot implemented.\r\n");
 
             EFI_GUID lidpp_guid = EFI_LOADED_IMAGE_DEVICE_PATH_PROTOCOL_GUID;
-            //TODO: use as unique identifier somehow
+            
+            // Get Device Path to Text protocol to print
+            EFI_STATUS status = EFI_SUCCESS;
+            EFI_GUID dpttp_guid = EFI_DEVICE_PATH_TO_TEXT_PROTOCOL_GUID;
+            EFI_DEVICE_PATH_TO_TEXT_PROTOCOL* dpttp;
+            status = bs->LocateProtocol(&dpttp_guid, NULL, (VOID **)&dpttp);
+            if (EFI_ERROR(status)) {
+                error(status, u"Could not locate Device Path To Text Protocol.\r\n");
+                return status;
+            }
 
+            EFI_DEVICE_PATH_PROTOCOL* list;
+            status = bs->LocateProtocol(&lidpp_guid, NULL, (VOID**)&list);
+            if(status != EFI_SUCCESS) {
+                printf_c16(u"ERROR: of LocateProtocol - loaded image device path protocol");
+            }
+            
+            CHAR16* device_path_text = dpttp->ConvertDevicePathToText(list, FALSE, FALSE); //10.6.4
+
+            printf_c16(u"Device Path: %s\r\n", device_path_text ? device_path_text : u"(null)");
+            get_key();
         } else {
             bs->FreePool(var_name_buf);
             break;
