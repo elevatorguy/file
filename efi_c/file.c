@@ -2503,6 +2503,7 @@ EFI_STATUS change_boot_variables(void) {
             printf_c16(u"\r\nNot implemented.");
 
             EFI_GUID lidpp_guid = EFI_LOADED_IMAGE_DEVICE_PATH_PROTOCOL_GUID;
+            //TODO: use as unique identifier somehow
 
         } else {
             bs->FreePool(var_name_buf);
