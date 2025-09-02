@@ -63,6 +63,8 @@ noreturn void EFIAPI kmain(Kernel_Parms *kargs) {
     print_string("\r\nFont 2 Name: ", font2);
     print_string(font2->name, font2);
 
+    //bigger clock?
+
     // Test runtime services by waiting a few seconds and then shutting down
     EFI_TIME old_time = {0}, new_time = {0};
     EFI_TIME_CAPABILITIES time_cap = {0};
