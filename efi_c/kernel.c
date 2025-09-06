@@ -37,6 +37,34 @@ const uint32_t text_bg_color = colors[DARK_GRAY];
 
 void print_string(char *string, Bitmap_Font *font);
 
+EFI_EVENT timer_event;
+int8_t utc_offset = -5;
+CHAR16 text1[255];
+CHAR16 text2[255];
+volatile bool pendingText = false;
+
+VOID EFIAPI print_datetime(__attribute__((unused)) IN EFI_EVENT event, IN VOID *Context) {
+    // Get current date/time
+    EFI_TIME time;
+    EFI_TIME_CAPABILITIES capabilities;
+    rs->GetTime(&time, &capabilities);
+
+    time = adjust(time, utc_offset);
+
+    // Current date/time
+    sprintf_c16(text1,
+           u"%u-%c%u-%c%u",
+           time.Year, 
+           time.Month  < 10 ? u'0' : u'\0', time.Month,
+           time.Day    < 10 ? u'0' : u'\0', time.Day);
+    sprintf_c16(text2,
+           u"%c%u:%c%u:%c%u",
+           time.Hour   < 10 ? u'0' : u'\0', time.Hour,
+           time.Minute < 10 ? u'0' : u'\0', time.Minute,
+           time.Second < 10 ? u'0' : u'\0', time.Second);
+    pendingText = true;
+}
+
 // ==============
 // MAIN
 // ==============
@@ -53,17 +81,14 @@ noreturn void EFIAPI kmain(Kernel_Parms *kargs) {
         for (x = 0; x < xres; x++) 
             fb[y*xres + x] = color;
 
+    print_datetime(timer_event, (VOID*)NULL);
+
     // Print test string(s)
     x = y = 0;  // Reset to 0,0 position
     Bitmap_Font *font1 = &kargs->fonts[0];
     Bitmap_Font *font2 = &kargs->fonts[1];
-    print_string("Hello, kernel bitmap font world!", font1);
-    print_string("\r\nFont 1 Name: ", font1);
-    print_string(font1->name, font1);
-    print_string("\r\nFont 2 Name: ", font2);
-    print_string(font2->name, font2);
-
-    //bigger clock?
+    print_string(text1, font1);
+    print_string(text2, font2);
 
     // Test runtime services by waiting a few seconds and then shutting down
     EFI_TIME old_time = {0}, new_time = {0};
