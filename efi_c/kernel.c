@@ -39,11 +39,11 @@ void print_string(char *string, Bitmap_Font *font);
 
 EFI_EVENT timer_event;
 int8_t utc_offset = -5;
-CHAR16 text1[255];
-CHAR16 text2[255];
+char text1[255];
+char text2[255];
 volatile bool pendingText = false;
 
-VOID EFIAPI print_datetime(__attribute__((unused)) IN EFI_EVENT event, IN VOID *Context) {
+void update_text(EFI_RUNTIME_SERVICES* rs) {
     // Get current date/time
     EFI_TIME time;
     EFI_TIME_CAPABILITIES capabilities;
@@ -52,16 +52,18 @@ VOID EFIAPI print_datetime(__attribute__((unused)) IN EFI_EVENT event, IN VOID *
     time = adjust(time, utc_offset);
 
     // Current date/time
-    sprintf_c16(text1,
-           u"%u-%c%u-%c%u",
+    /*sprintf(text1,
+           "%u-%c%u-%c%u",
            time.Year, 
-           time.Month  < 10 ? u'0' : u'\0', time.Month,
-           time.Day    < 10 ? u'0' : u'\0', time.Day);
-    sprintf_c16(text2,
-           u"%c%u:%c%u:%c%u",
-           time.Hour   < 10 ? u'0' : u'\0', time.Hour,
-           time.Minute < 10 ? u'0' : u'\0', time.Minute,
-           time.Second < 10 ? u'0' : u'\0', time.Second);
+           time.Month  < 10 ? '0' : '\0', time.Month,
+           time.Day    < 10 ? '0' : '\0', time.Day);
+    sprintf(text2,
+           "%c%u:%c%u:%c%u",
+           time.Hour   < 10 ? '0' : '\0', time.Hour,
+           time.Minute < 10 ? '0' : '\0', time.Minute,
+           time.Second < 10 ? '0' : '\0', time.Second);*/
+    text1[0] = '3';
+    text2[0] = '4';
     pendingText = true;
 }
 
@@ -81,14 +83,24 @@ noreturn void EFIAPI kmain(Kernel_Parms *kargs) {
         for (x = 0; x < xres; x++) 
             fb[y*xres + x] = color;
 
-    print_datetime(timer_event, (VOID*)NULL);
+    // Initialize Text
+    for(uint16_t i = 0; i < 256; i++) {
+        text1[i] = '\0';
+        text2[i] = '\0';
+    }
 
     // Print test string(s)
     x = y = 0;  // Reset to 0,0 position
     Bitmap_Font *font1 = &kargs->fonts[0];
     Bitmap_Font *font2 = &kargs->fonts[1];
+    print_string("before\r\n", font1);
+    print_string("before\r\n", font2);
+    update_text(kargs->RuntimeServices);
     print_string(text1, font1);
+    print_string("\r\n", font1);
     print_string(text2, font2);
+    print_string("\r\nafter\r\n", font1);
+    print_string("after\r\n", font2);
 
     // Test runtime services by waiting a few seconds and then shutting down
     EFI_TIME old_time = {0}, new_time = {0};

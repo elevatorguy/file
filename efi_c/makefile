@@ -56,18 +56,13 @@ DEPENDS = $(EFIOBJ:.o=.d) $(KERNEL_SRC:.c=.d)
 EFI_APP = FILE.EFI
 
 # Uncomment kernel binary format to build
-KERNEL = kernel.elf    # ELF64 PIE kernel binary
-#KERNEL = kernel.pe     # PE32+ PIE kernel binary
-#KERNEL = kernel.binelf # Flat binary PIE kernel from ELF file
-#KERNEL = kernel.binpe  # Flat binary PIE kernel from PE file
+KERNEL  = kernel.elf        # ELF64 PIE kernel binary
 
 FONT = ter-132n.psf	# PSF2 Bitmapped Font: Terminus 16x32 ISO8859-1
 
 # Add kernel binary to new disk image
 ADD_KERNEL = \
-	cd $(DISK_IMG_FOLDER) \
-	$(DISK_IMG_PGM) -ae /EFI/BOOT/ ../efi_c/$(EFI_APP) \
-					  -ad ../efi_c/$(KERNEL) ../efi_c/$(FONT);
+	cd $(DISK_IMG_FOLDER) && $(DISK_IMG_PGM) -ds 95 -es 1000 -ae /EFI/BOOT/ ../efi_c/$(EFI_APP) /EFI/ DRIVER -ad ../efi_c/kernel ../efi_c/$(FONT) && move file.img K: && del FILE.TXT
 
 all: $(EFI_APP) $(KERNEL)
 
@@ -116,20 +111,7 @@ $(EFIOBJ): $(EFISRC)
 	$(EFICC) $(QFLAGS) -c -o $@ $<
 
 kernel.elf: $(KERNEL_SRC)
-	$(ELFCC) $(KERNEL_CFLAGS) $(KERNEL_LDFLAGS) -o $@ $<
-   
-kernel.pe: $(KERNEL_SRC)
-	$(PECC) $(KERNEL_CFLAGS) $(KERNEL_LDFLAGS) -o $@ $<
-	$(ADD_KERNEL)
-
-kernel.binelf: $(KERNEL_SRC)
-	$(ELFCC) -c $(KERNEL_CFLAGS) /Fo kernel.obj $<
-	$(ELFLD) $(KERNEL_LDFLAGS) -Tkernel.ld --oformat binary -o $@ kernel.obj
-
-kernel.binpe: $(KERNEL_SRC)
-	$(PECC) -c $(KERNEL_CFLAGS) -o kernel.o $<
-	$(PELD) $(KERNEL_LDFLAGS) -Tkernel.ld --image-base=0 -o kernel.obj kernel.o
-	objcopy -O binary kernel.obj $@
+	$(ELFCC) $(KERNEL_CFLAGS) $(KERNEL_LDFLAGS) -o $@ $< && move $@ kernel
 	$(ADD_KERNEL)
 
 -include $(DEPENDS)

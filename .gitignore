@@ -13,3 +13,4 @@ build
 *.binpe
 *.raw
 bin
+/efi_c/kernel
