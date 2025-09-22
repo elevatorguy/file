@@ -10,16 +10,23 @@ ifeq ($(OS), Windows_NT)
 HOST_OS     = Windows
 QEMU_SCRIPT = qemu_$(ARCH).bat
 FLAGS = $(QFLAGS)
+MOVE_CMD = move
+MOVE_DEST = K:
+DISK_IMG_PGM = file.exe
+DISK_IMG_FOLDER = ../UEFI-GPT-image-creator/
+RELATIVE_PATH = ../efi_c/
+DELETE_CMD = del
 else
 HOST_OS     = Linux
 QEMU_SCRIPT = ./qemu_$(ARCH).sh
 FLAGS = $(CFLAGS)
+MOVE_CMD = mv
+MOVE_DEST = /tmp
+DISK_IMG_PGM = write_gpt
+DISK_IMG_FOLDER = . #~/.local/bin
+RELATIVE_PATH = ./
+DELETE_CMD = rm
 endif
-
-# Uncomment disk image program & shell script 
-DISK_IMG_PGM = file.exe
-
-DISK_IMG_FOLDER = ../UEFI-GPT-image-creator/
 
 ifeq ($(ARCH), x86_64)
 OVMF = $(DISK_IMG_FOLDER)bios64.bin
@@ -64,12 +71,12 @@ FONT = ter-132n.psf	# PSF2 Bitmapped Font: Terminus 16x32 ISO8859-1
 
 # Add kernel binary to new disk image
 ADD_KERNEL = \
-	cd $(DISK_IMG_FOLDER) && $(DISK_IMG_PGM) -ds 95 -es 1000 -ae /EFI/BOOT/ ../efi_c/$(EFI_APP) /EFI/ DRIVER -ad ../efi_c/kernel ../efi_c/$(FONT) && move file.img K: && del FILE.TXT
+	cd $(DISK_IMG_FOLDER) && $(DISK_IMG_PGM) -ds 95 -es 1000 -ae /EFI/BOOT/ $(RELATIVE_PATH)$(EFI_APP) /EFI/ DRIVER -ad $(RELATIVE_PATH)kernel $(RELATIVE_PATH)$(FONT) && $(MOVE_CMD) file.img $(MOVE_DEST) && $(DELETE_CMD) FILE.TXT
 
 all: $(EFI_APP) $(KERNEL)
 
 $(DISK_IMG_FOLDER)/$(DISK_IMG_PGM):
-	cd $(DISK_IMG_FOLDER) && $(MAKE) 
+	cd $(DISK_IMG_FOLDER) && $(MAKE)
 
 # Common CFLAGS
 #todo: verify that the Q the same as not Q
@@ -113,11 +120,10 @@ $(EFIOBJ): $(EFISRC)
 	$(EFICC) $(FLAGS) -c -o $@ $<
 
 kernel.elf: $(KERNEL_SRC)
-	$(ELFCC) $(KERNEL_CFLAGS) $(KERNEL_LDFLAGS) -o $@ $< && move $@ kernel
+	$(ELFCC) $(KERNEL_CFLAGS) $(KERNEL_LDFLAGS) -o $@ $< && $(MOVE_CMD) $@ kernel
 	$(ADD_KERNEL)
 
 -include $(DEPENDS)
 
 clean:
 	rm -rf $(EFI_APP) $(KERNEL) [!bios]*.bin* *.d *.efi *.EFI *.elf *.o *.obj *.pe
-
