@@ -9,9 +9,11 @@ MACHINE ?= unknown
 ifeq ($(OS), Windows_NT)
 HOST_OS     = Windows
 QEMU_SCRIPT = qemu_$(ARCH).bat
+FLAGS = $(QFLAGS)
 else
 HOST_OS     = Linux
 QEMU_SCRIPT = ./qemu_$(ARCH).sh
+FLAGS = $(CFLAGS)
 endif
 
 # Uncomment disk image program & shell script 
@@ -108,7 +110,7 @@ $(EFI_APP): $(EFIOBJ)
 	$(EFICC) $(EFI_LDFLAGS) $< $(EFI_LDFLAGS2) -out:$@
 
 $(EFIOBJ): $(EFISRC)
-	$(EFICC) $(QFLAGS) -c -o $@ $<
+	$(EFICC) $(FLAGS) -c -o $@ $<
 
 kernel.elf: $(KERNEL_SRC)
 	$(ELFCC) $(KERNEL_CFLAGS) $(KERNEL_LDFLAGS) -o $@ $< && move $@ kernel
