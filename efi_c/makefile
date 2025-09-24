@@ -16,6 +16,7 @@ DISK_IMG_PGM = file.exe
 DISK_IMG_FOLDER = ../UEFI-GPT-image-creator/
 RELATIVE_PATH = ../efi_c/
 DELETE_CMD = del
+ELFCC = clang -target $(ARCH)-$(MACHINE)-elf
 else
 HOST_OS     = Linux
 QEMU_SCRIPT = ./qemu_$(ARCH).sh
@@ -26,6 +27,7 @@ DISK_IMG_PGM = write_gpt
 DISK_IMG_FOLDER = . #~/.local/bin
 RELATIVE_PATH = ./
 DELETE_CMD = rm
+ELFCC = icx -target $(ARCH)-$(MACHINE)-elf
 endif
 
 ifeq ($(ARCH), x86_64)
@@ -109,8 +111,7 @@ KERNEL_CFLAGS  = $(CFLAGS) -fPIE
 KERNEL_LDFLAGS = -e kmain -nostdlib -pie
 
 # ELF files
-#ELFCC = icx -target $(ARCH)-$(MACHINE)-elf 
-ELFCC = clang -target $(ARCH)-$(MACHINE)-elf
+#see ELFCC above
 ELFLD = ld.lld
 
 $(EFI_APP): $(EFIOBJ)
