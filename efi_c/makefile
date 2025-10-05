@@ -5,6 +5,7 @@
 # Can override on command line with 'ARCH=<arch> MACHINE=<machine> make'
 ARCH 	?= x86_64
 MACHINE ?= unknown
+DATA_PARTITION = /dev/null #change this
 
 ifeq ($(OS), Windows_NT)
 HOST_OS     = Windows
@@ -72,8 +73,10 @@ KERNEL  = kernel.elf        # ELF64 PIE kernel binary
 FONT = ter-132n.psf	# PSF2 Bitmapped Font: Terminus 16x32 ISO8859-1
 
 # Add kernel binary to new disk image
+# initial ESP creation:
+#	cd $(DISK_IMG_FOLDER) && $(DISK_IMG_PGM) -ds 95 -es 1000 -ae /EFI/BOOT/ $(RELATIVE_PATH)$(EFI_APP) /EFI/ DRIVER -ad $(RELATIVE_PATH)kernel $(RELATIVE_PATH)$(FONT) && $(MOVE_CMD) file.img $(MOVE_DEST) && $(DELETE_CMD) FILE.TXT
 ADD_KERNEL = \
-	cd $(DISK_IMG_FOLDER) && $(DISK_IMG_PGM) -ds 95 -es 1000 -ae /EFI/BOOT/ $(RELATIVE_PATH)$(EFI_APP) /EFI/ DRIVER -ad $(RELATIVE_PATH)kernel $(RELATIVE_PATH)$(FONT) && $(MOVE_CMD) file.img $(MOVE_DEST) && $(DELETE_CMD) FILE.TXT
+	sudo dd if=kernel of=$(DATA_PARTITION)
 
 all: $(EFI_APP) $(KERNEL)
 

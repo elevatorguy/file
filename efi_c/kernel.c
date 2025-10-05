@@ -52,18 +52,16 @@ void update_text(EFI_RUNTIME_SERVICES* rs) {
     time = adjust(time, utc_offset);
 
     // Current date/time
-    /*sprintf(text1,
+    sprintf(text1,
            "%u-%c%u-%c%u",
-           time.Year, 
+           time.Year,
            time.Month  < 10 ? '0' : '\0', time.Month,
            time.Day    < 10 ? '0' : '\0', time.Day);
     sprintf(text2,
            "%c%u:%c%u:%c%u",
            time.Hour   < 10 ? '0' : '\0', time.Hour,
            time.Minute < 10 ? '0' : '\0', time.Minute,
-           time.Second < 10 ? '0' : '\0', time.Second);*/
-    text1[0] = '3';
-    text2[0] = '4';
+           time.Second < 10 ? '0' : '\0', time.Second);
     pendingText = true;
 }
 
