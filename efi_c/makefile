@@ -127,4 +127,4 @@ kernel.elf: $(KERNEL_SRC)
 -include $(DEPENDS)
 
 clean:
-	rm -rf $(EFI_APP) $(KERNEL) [!bios]*.bin* *.d *.efi *.EFI *.elf *.o *.obj *.pe
+	$(DELETE_CMD) -rf $(EFI_APP) $(KERNEL) [!bios]*.bin* *.d *.efi *.EFI *.elf *.o *.obj *.pe
