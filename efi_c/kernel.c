@@ -79,10 +79,6 @@ noreturn void EFIAPI kmain(Kernel_Parms *kargs) {
     x = y = 0;  // Reset to 0,0 position
     Bitmap_Font *font1 = &kargs->fonts[0];
     Bitmap_Font *font2 = &kargs->fonts[1];
-    update_text(timer_event, kargs->RuntimeServices);
-    print_string(text1, font1);
-    print_string("\r\n", font1);
-    print_string(text2, font2);
 
     while (true) {
         EFI_KEY_DATA data = {0};
