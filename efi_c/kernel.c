@@ -41,29 +41,8 @@ EFI_EVENT timer_event;
 int8_t utc_offset = -5;
 char text1[255];
 char text2[255];
-volatile bool pendingText = false;
 
-void update_text(EFI_RUNTIME_SERVICES* rs) {
-    // Get current date/time
-    EFI_TIME time;
-    EFI_TIME_CAPABILITIES capabilities;
-    rs->GetTime(&time, &capabilities);
-
-    time = adjust(time, utc_offset);
-
-    // Current date/time
-    sprintf(text1,
-           "%u-%c%u-%c%u",
-           time.Year,
-           time.Month  < 10 ? '0' : '\0', time.Month,
-           time.Day    < 10 ? '0' : '\0', time.Day);
-    sprintf(text2,
-           "%c%u:%c%u:%c%u",
-           time.Hour   < 10 ? '0' : '\0', time.Hour,
-           time.Minute < 10 ? '0' : '\0', time.Minute,
-           time.Second < 10 ? '0' : '\0', time.Second);
-    pendingText = true;
-}
+void update_text(EFI_TIME* t);
 
 // ==============
 // MAIN
@@ -91,25 +70,33 @@ noreturn void EFIAPI kmain(Kernel_Parms *kargs) {
     x = y = 0;  // Reset to 0,0 position
     Bitmap_Font *font1 = &kargs->fonts[0];
     Bitmap_Font *font2 = &kargs->fonts[1];
-    update_text(kargs->RuntimeServices);
-    print_string(text1, font1);
-    print_string("\r\n", font1);
-    print_string(text2, font2);
-
+    
     // Test runtime services by waiting a few seconds and then shutting down
     EFI_TIME old_time = {0}, new_time = {0};
     EFI_TIME_CAPABILITIES time_cap = {0};
-    UINTN i = 0;
-    while (i < 30) {
+    bool needed = true;
+    while (needed) {
         kargs->RuntimeServices->GetTime(&new_time, &time_cap);
-        update_text(kargs->RuntimeServices);
         if (old_time.Second != new_time.Second) {
-            i++;
             x = y = 0;
+            new_time = adjust(new_time, utc_offset);
+            update_text(&new_time);
             print_string(text1, font1);
             print_string("\r\n", font1);
             print_string(text2, font2);
             old_time.Second = new_time.Second;
+            
+            /*
+            EFI_KEY_DATA data = {0};
+            EFI_INPUT_KEY key = {0};
+            EFI_STATUS status = cin->ReadKeyStrokeEx(cin, &data);
+            if(status == EFI_SUCCESS) {
+                key = data.Key;
+                if(key.ScanCode == SCANCODE_ESC) {
+                    needed = false;
+                }
+            }
+            */
         }
     }
 
@@ -124,6 +111,19 @@ noreturn void EFIAPI kmain(Kernel_Parms *kargs) {
 
     // Should not return after shutting down
     //__builtin_unreachable();
+}
+
+void update_text(EFI_TIME* time) {
+    sprintf(text1,
+           "%u-%c%u-%c%u",
+           time->Year,
+           time->Month  < 10 ? '0' : '\0', time->Month,
+           time->Day    < 10 ? '0' : '\0', time->Day);
+    sprintf(text2,
+           "%c%u:%c%u:%c%u",
+           time->Hour   < 10 ? '0' : '\0', time->Hour,
+           time->Minute < 10 ? '0' : '\0', time->Minute,
+           time->Second < 10 ? '0' : '\0', time->Second);
 }
 
 // ======================================================================
