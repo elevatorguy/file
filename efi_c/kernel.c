@@ -91,23 +91,24 @@ noreturn void EFIAPI kmain(Kernel_Parms *kargs) {
     x = y = 0;  // Reset to 0,0 position
     Bitmap_Font *font1 = &kargs->fonts[0];
     Bitmap_Font *font2 = &kargs->fonts[1];
-    print_string("before\r\n", font1);
-    print_string("before\r\n", font2);
     update_text(kargs->RuntimeServices);
     print_string(text1, font1);
     print_string("\r\n", font1);
     print_string(text2, font2);
-    print_string("\r\nafter\r\n", font1);
-    print_string("after\r\n", font2);
 
     // Test runtime services by waiting a few seconds and then shutting down
     EFI_TIME old_time = {0}, new_time = {0};
     EFI_TIME_CAPABILITIES time_cap = {0};
     UINTN i = 0;
-    while (i < 3) {
+    while (i < 10) {
         kargs->RuntimeServices->GetTime(&new_time, &time_cap);
+        update_text(kargs->RuntimeServices);
         if (old_time.Second != new_time.Second) {
             i++;
+            x = y = 0;
+            print_string(text1, font1);
+            print_string("\r\n", font1);
+            print_string(text2, font2);
             old_time.Second = new_time.Second;
         }
     }
