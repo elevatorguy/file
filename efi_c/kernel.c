@@ -71,19 +71,19 @@ noreturn void EFIAPI kmain(Kernel_Parms *kargs) {
     x = y = 0;  // Reset to 0,0 position
     Bitmap_Font *font1 = &kargs->fonts[0];
     Bitmap_Font *font2 = &kargs->fonts[1];
-    print_string("0\r\n", font2);
+    print_string("1\r\n", font2);
 
     bs->CreateEvent(EVT_TIMER | EVT_NOTIFY_SIGNAL,
                         TPL_CALLBACK,
                         update_text,
-                        (VOID *)kargs->RuntimeServices,
+                        (VOID *)(kargs->RuntimeServices),
                         &timer_event);
 
-    print_string("1\r\n", font2);
+    print_string("2\r\n", font2);
 
     bs->SetTimer(timer_event, TimerPeriodic, 1000000);
 
-    print_string("2\r\n", font2);
+    print_string("3\r\n", font2);
 
     while (true) {
         EFI_KEY_DATA data = {0};
