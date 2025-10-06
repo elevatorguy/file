@@ -12,7 +12,7 @@ HOST_OS     = Windows
 QEMU_SCRIPT = qemu_$(ARCH).bat
 FLAGS = $(QFLAGS)
 MOVE_CMD = move
-MOVE_DEST = K:
+MOVE_DEST = F:
 DISK_IMG_PGM = file.exe
 DISK_IMG_FOLDER = ../UEFI-GPT-image-creator/
 RELATIVE_PATH = ../efi_c/
@@ -73,10 +73,8 @@ KERNEL  = kernel.elf        # ELF64 PIE kernel binary
 FONT = ter-132n.psf	# PSF2 Bitmapped Font: Terminus 16x32 ISO8859-1
 
 # Add kernel binary to new disk image
-# initial ESP creation:
-#	cd $(DISK_IMG_FOLDER) && $(DISK_IMG_PGM) -ds 95 -es 1000 -ae /EFI/BOOT/ $(RELATIVE_PATH)$(EFI_APP) /EFI/ DRIVER -ad $(RELATIVE_PATH)kernel $(RELATIVE_PATH)$(FONT) && $(MOVE_CMD) file.img $(MOVE_DEST) && $(DELETE_CMD) FILE.TXT
 ADD_KERNEL = \
-	sudo dd if=kernel of=$(DATA_PARTITION)
+    cd $(DISK_IMG_FOLDER) && $(DISK_IMG_PGM) -ds 95 -es 1000 -ae /EFI/BOOT/ $(RELATIVE_PATH)$(EFI_APP) /EFI/ DRIVER -ad $(RELATIVE_PATH)kernel $(RELATIVE_PATH)$(FONT) && $(MOVE_CMD) file.img $(MOVE_DEST) && $(DELETE_CMD) FILE.TXT
 
 all: $(EFI_APP) $(KERNEL)
 

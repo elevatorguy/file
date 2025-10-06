@@ -100,7 +100,7 @@ noreturn void EFIAPI kmain(Kernel_Parms *kargs) {
     EFI_TIME old_time = {0}, new_time = {0};
     EFI_TIME_CAPABILITIES time_cap = {0};
     UINTN i = 0;
-    while (i < 10) {
+    while (i < 30) {
         kargs->RuntimeServices->GetTime(&new_time, &time_cap);
         update_text(kargs->RuntimeServices);
         if (old_time.Second != new_time.Second) {
