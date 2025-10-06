@@ -43,27 +43,7 @@ char text1[255];
 char text2[255];
 volatile bool pendingText = false;
 
-void update_text(EFI_RUNTIME_SERVICES* rs) {
-    // Get current date/time
-    EFI_TIME time;
-    EFI_TIME_CAPABILITIES capabilities;
-    rs->GetTime(&time, &capabilities);
-
-    time = adjust(time, utc_offset);
-
-    // Current date/time
-    sprintf(text1,
-           "%u-%c%u-%c%u",
-           time.Year,
-           time.Month  < 10 ? '0' : '\0', time.Month,
-           time.Day    < 10 ? '0' : '\0', time.Day);
-    sprintf(text2,
-           "%c%u:%c%u:%c%u",
-           time.Hour   < 10 ? '0' : '\0', time.Hour,
-           time.Minute < 10 ? '0' : '\0', time.Minute,
-           time.Second < 10 ? '0' : '\0', time.Second);
-    pendingText = true;
-}
+void EFIAPI update_text(__attribute__((unused)) IN EFI_EVENT, IN void*);
 
 // ==============
 // MAIN
@@ -87,31 +67,40 @@ noreturn void EFIAPI kmain(Kernel_Parms *kargs) {
         text2[i] = '\0';
     }
 
+    bs->CreateEvent(EVT_TIMER | EVT_NOTIFY_SIGNAL,
+                        TPL_CALLBACK,
+                        update_text,
+                        (VOID *)kargs,
+                        &timer_event);
+
+    bs->SetTimer(timer_event, TimerPeriodic, 1000000);
+
     // Print test string(s)
     x = y = 0;  // Reset to 0,0 position
     Bitmap_Font *font1 = &kargs->fonts[0];
     Bitmap_Font *font2 = &kargs->fonts[1];
-    update_text(kargs->RuntimeServices);
+    update_text(timer_event, kargs->RuntimeServices);
     print_string(text1, font1);
     print_string("\r\n", font1);
     print_string(text2, font2);
 
-    // Test runtime services by waiting a few seconds and then shutting down
-    EFI_TIME old_time = {0}, new_time = {0};
-    EFI_TIME_CAPABILITIES time_cap = {0};
-    UINTN i = 0;
-    while (i < 30) {
-        kargs->RuntimeServices->GetTime(&new_time, &time_cap);
-        update_text(kargs->RuntimeServices);
-        if (old_time.Second != new_time.Second) {
-            i++;
+    while (true) {
+        EFI_KEY_DATA data = {0};
+        EFI_INPUT_KEY key = {0};
+        cin->ReadKeyStrokeEx(cin, &data);
+        key = data.Key;
+        if (key.ScanCode == SCANCODE_ESC) {
+            break;
+        }
+        if (pendingText) {
             x = y = 0;
             print_string(text1, font1);
             print_string("\r\n", font1);
             print_string(text2, font2);
-            old_time.Second = new_time.Second;
+            pendingText = false;
         }
     }
+
 
     // Uncomment if qemu/hardware works fine with shutdown
     kargs->RuntimeServices->ResetSystem(EfiResetShutdown, EFI_SUCCESS, 0, NULL);
@@ -124,6 +113,29 @@ noreturn void EFIAPI kmain(Kernel_Parms *kargs) {
 
     // Should not return after shutting down
     //__builtin_unreachable();
+}
+
+void EFIAPI update_text(__attribute__((unused)) IN EFI_EVENT event, IN void* context) {
+    EFI_RUNTIME_SERVICES* rs = (EFI_RUNTIME_SERVICES*)context;
+    // Get current date/time
+    EFI_TIME time;
+    EFI_TIME_CAPABILITIES capabilities;
+    rs->GetTime(&time, &capabilities);
+
+    time = adjust(time, utc_offset);
+
+    // Current date/time
+    sprintf(text1,
+           "%u-%c%u-%c%u",
+           time.Year,
+           time.Month  < 10 ? '0' : '\0', time.Month,
+           time.Day    < 10 ? '0' : '\0', time.Day);
+    sprintf(text2,
+           "%c%u:%c%u:%c%u",
+           time.Hour   < 10 ? '0' : '\0', time.Hour,
+           time.Minute < 10 ? '0' : '\0', time.Minute,
+           time.Second < 10 ? '0' : '\0', time.Second);
+    pendingText = true;
 }
 
 // ======================================================================
