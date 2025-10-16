@@ -1,6 +1,8 @@
 Hardware:
     Intel 6770K CPU; ASUS Z170-A
 
+[Manuals](https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html)
+
 >    PCI Local Bus Specification, Rev. 2.3
 >    PCI Power Management Interface Specification, Rev. 1.2
 >    PCI Express* Base Specification, Rev. 1.0a
@@ -18,4 +20,3 @@ Hardware:
 
 [SNLA415](https://ti.com/lit/an/snla415/snla415.pdf)
 
-https://www.intel.com/content/www/us/en/products/overview.html
