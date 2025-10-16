@@ -17,3 +17,5 @@ Hardware:
 ![file](https://github.com/user-attachments/assets/bfb4fc8d-7faf-45bf-8e47-b395f3a96b94)
 
 [SNLA415](https://ti.com/lit/an/snla415/snla415.pdf)
+
+https://www.intel.com/content/www/us/en/products/overview.html
