@@ -242,6 +242,8 @@ EFI_HANDLE image = NULL;                        // Image handle
 
 INT32 text_rows = 0, text_cols = 0;             // Current text mode screen rows & columns
 
+int8_t utc_offset = -6;
+
 // ======================
 // Set global variables
 // ======================

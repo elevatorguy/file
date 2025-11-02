@@ -63,7 +63,6 @@ EFI_GRAPHICS_OUTPUT_BLT_PIXEL save_buffer[8*8] = {0};
 bool autoload_kernel = false;   // Autoload kernel instead of main menu?
 bool menu_legend = false;
 bool clock_mode = false;
-int8_t utc_offset = -5;
 
 // ====================
 // Set Text Mode

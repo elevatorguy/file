@@ -41,7 +41,6 @@ const uint32_t text_bg_color = colors[DARK_GRAY];
 void print_string(char *string, Bitmap_Font *font);
 
 EFI_EVENT timer_event;
-int8_t utc_offset = -5;
 char text1[255];
 char text2[255];
 
