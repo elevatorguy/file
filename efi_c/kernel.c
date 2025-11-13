@@ -65,14 +65,14 @@ noreturn void EFIAPI kmain(Kernel_Parms *kargs) {
     x = y = 0;
     Bitmap_Font *font1 = &kargs->fonts[0];
     Bitmap_Font *font2 = &kargs->fonts[1];
-    
+//print_string("1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789", font2); x = 0; y = 0;
     EFI_TIME old_time = {0}, new_time = {0};
     EFI_TIME_CAPABILITIES time_cap = {0};
     bool needed = true;
     while (needed) {
         kargs->RuntimeServices->GetTime(&new_time, &time_cap);
         if (old_time.Second != new_time.Second) {
-            x = y = 0;
+            //x = y = 0;
             new_time = adjust(new_time, utc_offset);
             update_text(&new_time);
             print_string(text1, font1);
@@ -113,7 +113,9 @@ void update_text(EFI_TIME* time) {
 }
 
 void line_feed(Bitmap_Font *font) {
-    if (y + font->height < yres - font->height) y += font->height;
+    if ((y + font->height) < (yres - font->height)) {
+        y += font->height;
+    }
     else {
         uint32_t char_line_px    = xres * font->height;
         uint32_t char_line_bytes = char_line_px * 4;
@@ -149,12 +151,7 @@ void print_string(char *string, Bitmap_Font *font) {
                              ((uint64_t)glyph[7] <<  0) 
                              : *(uint64_t *)glyph;
             for (uint32_t px = 0; px < font->width; px++) {
-                //uint32_t x_1 = x/2;
-                //uint32_t y_1 = y/2;
-                fb[(y*2)*xres + (x*2)] = bytes & mask ? text_fg_color : text_bg_color;
-                fb[(y*2)*xres + (x*2)+1] = bytes & mask ? text_fg_color : text_bg_color;
-                fb[((y*2)+1)*xres + (x*2)] = bytes & mask ? text_fg_color : text_bg_color;
-                fb[((y*2)+1)*xres + (x*2)+1] = bytes & mask ? text_fg_color : text_bg_color;
+                fb[y*xres + x] = bytes & mask ? text_fg_color : text_bg_color;
                 mask >>= 1;
                 x++;
             }
@@ -164,7 +161,7 @@ void print_string(char *string, Bitmap_Font *font) {
         }
 
         y -= font->height;      
-        if (x + font->width < (xres/2) - font->width) x += font->width; 
+        if (x + font->width < xres - font->width) x += font->width; 
         else {
             x = 0;
             line_feed(font);
