@@ -149,7 +149,12 @@ void print_string(char *string, Bitmap_Font *font) {
                              ((uint64_t)glyph[7] <<  0) 
                              : *(uint64_t *)glyph;
             for (uint32_t px = 0; px < font->width; px++) {
-                fb[y*xres + x] = bytes & mask ? text_fg_color : text_bg_color;
+                //uint32_t x_1 = x/2;
+                //uint32_t y_1 = y/2;
+                fb[(y*2)*xres + (x*2)] = bytes & mask ? text_fg_color : text_bg_color;
+                fb[(y*2)*xres + (x*2)+1] = bytes & mask ? text_fg_color : text_bg_color;
+                fb[((y*2)+1)*xres + (x*2)] = bytes & mask ? text_fg_color : text_bg_color;
+                fb[((y*2)+1)*xres + (x*2)+1] = bytes & mask ? text_fg_color : text_bg_color;
                 mask >>= 1;
                 x++;
             }
@@ -159,7 +164,7 @@ void print_string(char *string, Bitmap_Font *font) {
         }
 
         y -= font->height;      
-        if (x + font->width < xres - font->width) x += font->width; 
+        if (x + font->width < (xres/2) - font->width) x += font->width; 
         else {
             x = 0;
             line_feed(font);
