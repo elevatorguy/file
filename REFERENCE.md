@@ -1,5 +1,5 @@
 Hardware:
-    Intel 6770K CPU; ASUS Z170-A
+    Intel 6700K CPU; ASUS Z170-A
 
 [Manuals](https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html)
 
@@ -9,6 +9,9 @@ Hardware:
 >    Advanced Configuration and Power Interface Specification, Rev. 2.0
 >
 >    Section 1.2.3 of [High Definition Audio Specification - Revision 1.0a](https://www.intel.com/content/www/us/en/standards/high-definition-audio-specification.html)
+
+(UEFI 2.11)[https://uefi.org/specs/UEFI/2.11/]
+(PI 1.9)[https://uefi.org/specs/PI/1.9]
 
 >    Preboot Execution Environment (PXE) Specification
 >
