@@ -19,6 +19,8 @@ a dell xps 13 laptop ca. 2019.
 
 Supported architectures are currently only x86_64, with stubs for Aarch64.
 
+TODO: EFI_MP_SERVICES_PROTOCOL (thanks to @ on youtube - see [video](https://youtu.be/#))
+
 ## repo layout
 `efi_c` is the main directory; it should hold the lastest developments and is used for building 
 EFI applications and test kernels.
