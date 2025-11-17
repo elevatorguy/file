@@ -19,7 +19,7 @@ a dell xps 13 laptop ca. 2019.
 
 Supported architectures are currently only x86_64, with stubs for Aarch64.
 
-TODO: [EFI_MP_SERVICES_PROTOCOL](https://uefi.org/specs/PI/1.9/V2_DXE_Boot_Services_Protocols.html) (thanks to InkboxSoftware on youtube - see [video](https://youtu.be/ZFHnbozz7b4))
+TODO: [EFI_MP_SERVICES_PROTOCOL](https://uefi.org/specs/PI/1.9/V2_DXE_Boot_Services_Protocols.html)
 
 ## repo layout
 `efi_c` is the main directory; it should hold the lastest developments and is used for building 
