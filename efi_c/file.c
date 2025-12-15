@@ -3218,6 +3218,9 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
                     else if (key.UnicodeChar == u'3') {
                       change_boot_next(3);
                     }
+                    else if (key.UnicodeChar == u'`') {
+                        load_kernel();
+                    }
                     break;
             }
         }

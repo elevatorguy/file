@@ -113,7 +113,7 @@ void update_text(EFI_TIME* time) {
 }
 
 void line_feed(Bitmap_Font *font) {
-    if (y + font->height < yres - font->height) y += font->height;
+    if ((y + font->height) < (yres - font->height)) y += font->height;
     else {
         uint32_t char_line_px    = xres * font->height;
         uint32_t char_line_bytes = char_line_px * 4;
