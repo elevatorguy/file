@@ -822,6 +822,35 @@ EFI_STATUS test_mouse(void) {
     return EFI_SUCCESS;
 }
 
+void init_framebuffer(void) {
+    EFI_STATUS status = 0;
+    EFI_GUID gop_guid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID; 
+    EFI_GRAPHICS_OUTPUT_PROTOCOL *gop = NULL;
+    EFI_GRAPHICS_OUTPUT_MODE_INFORMATION *mode_info = NULL;
+    UINTN mode_info_size = sizeof(EFI_GRAPHICS_OUTPUT_MODE_INFORMATION);
+    UINTN mode_index = 0;
+    
+    status = bs->LocateProtocol(&gop_guid, NULL, (VOID **)&gop);
+    if (EFI_ERROR(status)) {
+        error(status, u"Could not locate GOP! :(\r\n");
+        return;
+    }
+    if((*gop).Mode != NULL) {
+    	mode_index = (*(*gop).Mode).Mode;
+    }
+    
+    gop->QueryMode(gop, mode_index, &mode_info_size, &mode_info);
+    
+    UINT32* fb = (UINT32 *)gop->Mode->FrameBufferBase;  
+    INT32 xres = mode_info->PixelsPerScanLine;
+    INT32 yres = mode_info->VerticalResolution;
+
+    UINTN color = 0xFF000000;
+    for (UINTN y = yres-50; y < yres; y++) 
+        for (UINTN x = 0; x < xres; x++) 
+            fb[y*xres + x] = color;
+}
+
 void load_drivers(void) {
     EFI_HANDLE driver;
     CHAR16* driver_file = u"\\EFI\\DRIVER";
@@ -3018,6 +3047,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
         install_to_disk
     };
     
+    init_framebuffer();
     cout->EnableCursor(cout, false);
     load_drivers();
 
