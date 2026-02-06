@@ -3010,7 +3010,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     if (autoload_kernel) load_kernel(); // Load kernel; Should not return!
 
     // Menu text on screen
-    const CHAR16 *menu_choices[] = {
+    const CHAR16 *menu_choices[] = { //TODO : struct linked-list with max = available text rows
         u"Set Text Mode",
         u"Set Graphics Mode",
         u"Test Mouse",
