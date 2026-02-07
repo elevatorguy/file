@@ -1188,6 +1188,7 @@ EFI_STATUS test_network(void) {
         if(first == true) {
             first = false;
         }
+        //possible application: youtube API for live_chat message sending; menu item checks live status - sub-menu for sending if live
     }
     get_key();
     return status;
@@ -3010,7 +3011,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     if (autoload_kernel) load_kernel(); // Load kernel; Should not return!
 
     // Menu text on screen
-    const CHAR16 *menu_choices[] = { //TODO : struct linked-list with max = available text rows
+    const CHAR16 *menu_choices[] = {
         u"Set Text Mode",
         u"Set Graphics Mode",
         u"Test Mouse",
@@ -3022,7 +3023,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
         u"Print ACPI Tables",
         u"Print EFI Global Variables",
         u"Load Kernel",
-	u"Inspect Kernel",
+	    u"Inspect Kernel",
         u"Change Boot Variables",
         u"Write Disk Image Image To Other Disk",
         u"Install Bootloader & Autoload Kernel",
