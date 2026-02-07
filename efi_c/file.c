@@ -1188,7 +1188,6 @@ EFI_STATUS test_network(void) {
         if(first == true) {
             first = false;
         }
-        //possible application: youtube API for live_chat message sending; menu item checks live status - sub-menu for sending if live
     }
     get_key();
     return status;
