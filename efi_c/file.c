@@ -1831,10 +1831,16 @@ EFI_STATUS load_kernel(void) {
     }
 
     if (!autoload_kernel) {
-        printf_c16(u"\r\nPress ESC to abort, or another key to load kernel...\r\n");
+        printf_c16(u"\r\nPress ESC to abort, backtick to clear, or another key to load kernel...\r\n");
         EFI_INPUT_KEY key = get_key();
-        if (key.ScanCode == SCANCODE_ESC)
+        if (key.ScanCode == SCANCODE_ESC) {
+            printf_c16(u"DEBUG: esc\r\n");
+            return status;
+        }
+        if (key.UnicodeChar == u'`') {
+            printf_c16(u"DEBUG: backtick\r\n");
             goto cleanup;
+        }
     }
 
     // Close Timer Event so that it does not continue to fire off
