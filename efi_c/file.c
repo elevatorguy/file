@@ -3049,7 +3049,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
         print_acpi_tables,
         print_efi_global_variables,
         load_kernel,
-	inspect_kernel,
+        inspect_kernel,
         change_boot_variables,
         write_to_another_disk,
         install_to_disk
@@ -3125,10 +3125,11 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
             INTN current_row = cout->Mode->CursorRow;
             EFI_INPUT_KEY key = get_key();
 
+            static bool status = false;
+
             // Process input
             switch (key.ScanCode) {
                 case SCANCODE_INSERT:
-                    static bool status = false;
                     status = !status;
                     cout->EnableCursor(cout, status);
                     break;
@@ -3229,13 +3230,21 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
                     if (key.UnicodeChar == u'\r') {
                         cout->ClearScreen(cout);
 
-                        // Enter key, select choice
-                        EFI_STATUS return_status = menu_funcs[current_row]();
-                        if (EFI_ERROR(return_status)) 
-                            error(return_status, u"Press any key to go back...");
+                        //if(status) {
+                        //    printf_c16(u"New menu item? (ESC to cancel)\r\n");
+                        //    EFI_INPUT_KEY key = get_key();
+                        //    printf_c16(u"Not implemented.\r\n");
+                        //    key = get_key();
+                        //}
+                        //else {
+                            // Enter key, select choice
+                            EFI_STATUS return_status = menu_funcs[current_row]();
+                            if (EFI_ERROR(return_status)) 
+                                error(return_status, u"Press any key to go back...");
+                        //}
 
                         // Will leave input loop and reprint main menu
-                        getting_input = false; 
+                        getting_input = false;
                     }
                     else if(key.UnicodeChar == '-') {
                         if(clock_mode) {
