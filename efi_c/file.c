@@ -851,6 +851,7 @@ void init_framebuffer(void) {
             fb[y*xres + x] = color;
 }
 
+/*
 void load_drivers(void) {
     EFI_HANDLE driver;
     CHAR16* driver_file = u"\\EFI\\DRIVER";
@@ -875,6 +876,7 @@ void load_drivers(void) {
     abort:
     bs->FreePool(driv_file_buf);
 }
+*/
 
 CHAR16* print_ipAddress(EFI_IPv4_ADDRESS addr) {
         return u"<placeholder>";
@@ -3055,7 +3057,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     
     init_framebuffer();
     cout->EnableCursor(cout, false);
-    load_drivers();
+    //load_drivers();
 
     // Connect all controllers found for all handles, to hopefully fix
     //   any bugs related to not initializing device drivers from firmware
