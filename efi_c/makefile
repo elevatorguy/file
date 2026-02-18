@@ -31,6 +31,8 @@ DELETE_CMD = rm
 ELFCC = icx -target $(ARCH)-$(MACHINE)-elf
 endif
 
+EXPORT_CODE = false #data partition's copy of source
+
 ifeq ($(ARCH), x86_64)
 OVMF = $(DISK_IMG_FOLDER)bios64.bin
 endif
