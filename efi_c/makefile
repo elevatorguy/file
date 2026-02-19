@@ -40,6 +40,12 @@ ifeq ($(ARCH), aarch64)
 OVMF = QEMU_EFI_AARCH64.raw
 endif
 
+ifeq ($(EXPORT_CODE), true)
+LIST_TOTAL = 16
+else
+LIST_TOTAL = 15
+endif
+
 # Uncomment CC/LDFLAGS for EFI object - gcc
 #EFICC       = $(ARCH)-w64-mingw32-gcc
 #EFI_LDFLAGS = \
@@ -119,6 +125,10 @@ ELFLD = ld.lld
 
 $(EFI_APP): $(EFIOBJ)
 	$(EFICC) $(EFI_LDFLAGS) $< $(EFI_LDFLAGS2) -out:$@
+	@echo on
+	@echo 
+	@echo $(LIST_TOTAL) menu items.
+	@echo 
 
 $(EFIOBJ): $(EFISRC)
 	$(EFICC) $(FLAGS) -c -o $@ $<
