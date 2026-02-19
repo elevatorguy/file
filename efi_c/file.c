@@ -2337,6 +2337,8 @@ EFI_STATUS print_efi_global_variables(void) {
     return EFI_SUCCESS;
 }
 
+//todo: function returning bootorder number matching string parameter
+
 // ==========================================================
 // Print Boot variable values and allow user to change them
 // ==========================================================
