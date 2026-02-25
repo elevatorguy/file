@@ -2471,6 +2471,7 @@ EFI_STATUS change_boot_variables(void) {
 
                     printf_c16(u"Device Path: %s\r\n", device_path_text ? device_path_text : u"(null)");
 
+                    /*
                     UINT8 *optional_data = (UINT8 *)file_path_list + load_option->FilePathListLength;
                     UINTN optional_data_size = data_size - (optional_data - (UINT8 *)data);
                     if (optional_data_size > 0) {
@@ -2480,6 +2481,7 @@ EFI_STATUS change_boot_variables(void) {
 
                         printf_c16(u"\r\n");
                     }
+                    */
                     
                     goto next; 
                 }
