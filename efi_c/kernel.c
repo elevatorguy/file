@@ -65,11 +65,11 @@ noreturn void EFIAPI kmain(Kernel_Parms *kargs) {
     x = y = 0;
     Bitmap_Font *font1 = &kargs->fonts[0];
     Bitmap_Font *font2 = &kargs->fonts[1];
-    
+    uint16_t num = 0;
     EFI_TIME old_time = {0}, new_time = {0};
     EFI_TIME_CAPABILITIES time_cap = {0};
     bool needed = true;
-    while (needed) {
+    while (needed && (num < 60*5)) {
         kargs->RuntimeServices->GetTime(&new_time, &time_cap);
         if (old_time.Second != new_time.Second) {
             x = y = 0;
@@ -79,9 +79,8 @@ noreturn void EFIAPI kmain(Kernel_Parms *kargs) {
             print_string("\r\n", font1);
             print_string(text2, font2);
             old_time.Second = new_time.Second;
-            
-            /*
-            EFI_KEY_DATA data = {0};
+            num++;
+            /*EFI_KEY_DATA data = {0};
             EFI_INPUT_KEY key = {0};
             EFI_STATUS status = cin->ReadKeyStrokeEx(cin, &data);
             if(status == EFI_SUCCESS) {
@@ -89,8 +88,7 @@ noreturn void EFIAPI kmain(Kernel_Parms *kargs) {
                 if(key.ScanCode == SCANCODE_ESC) {
                     needed = false;
                 }
-            }
-            */
+            }*/
         }
     }
 
