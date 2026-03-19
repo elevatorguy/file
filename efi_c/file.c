@@ -2456,7 +2456,7 @@ EFI_STATUS change_boot_variables(void) {
                     // Boot#### load option: Name size = 8 CHAR16 chars * 2 bytes + CHAR16 null bytes
                     EFI_LOAD_OPTION *load_option = (EFI_LOAD_OPTION *)data;
                     CHAR16 *description = (CHAR16 *)((UINT8 *)data + sizeof(UINT32) + sizeof(UINT16));
-                    printf_c16(u"%s\r\n", description);
+                    printf_c16(u"%s", description);
 
                     CHAR16 *p = description;
                     UINTN strlen =  0;
@@ -2469,7 +2469,7 @@ EFI_STATUS change_boot_variables(void) {
                     CHAR16 *device_path_text =
                         dpttp->ConvertDevicePathToText(file_path_list, FALSE, FALSE);
 
-                    printf_c16(u"Device Path: %s\r\n", device_path_text ? device_path_text : u"(null)");
+                    printf_c16(u" (Device Path: %s)\r\n", device_path_text ? device_path_text : u"(null)");
 
                     /*
                     UINT8 *optional_data = (UINT8 *)file_path_list + load_option->FilePathListLength;
