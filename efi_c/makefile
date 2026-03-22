@@ -61,6 +61,9 @@ PELD  = $(ARCH)-w64-mingw32-ld
 
 KERNEL_SRC     = kernel.c
 
+ENV_SRC      = kernel_env.c
+ENV_WEIGHTS  = env_weights.o
+
 EFISRC  = file.c
 EFIOBJ  = $(EFISRC:%.c=%_$(ARCH).o)
 DEPENDS = $(EFIOBJ:.o=.d) $(KERNEL_SRC:.c=.d)
@@ -129,3 +132,9 @@ kernel.elf: $(KERNEL_SRC)
 
 clean:
 	$(DELETE_CMD) -rf $(EFI_APP) $(KERNEL) [!bios]*.bin* *.d *.efi *.EFI *.elf *.o *.obj *.pe
+
+kernel_env.elf: $(ENV_SRC) $(ENV_WEIGHTS)
+	$(ELFCC) $(KERNEL_CFLAGS) $(KERNEL_LDFLAGS) -o $@ $< $(ENV_WEIGHTS) && $(MOVE_CMD) $@ kernel
+
+env: kernel_env.elf
+	$(ADD_KERNEL)
