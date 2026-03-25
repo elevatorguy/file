@@ -1,6 +1,9 @@
 # Aiming for (mostly) POSIX.1-2024 compliance
 .POSIX:
 
+#requires the following before running make:
+#source /opt/intel/oneapi/setvars.sh
+
 # Set architecture and machine type if wanted
 # Can override on command line with 'ARCH=<arch> MACHINE=<machine> make'
 ARCH 	?= x86_64
