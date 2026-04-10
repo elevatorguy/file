@@ -2651,19 +2651,28 @@ EFI_STATUS change_boot_next(uint8_t position) {
 
                 UINT16* p = data;
 
-                for (UINTN i = 0; i < data_size / 2; i++) {
-                    if(position == (i+1)) {
-                        // Change BootNext value - set new UINT16
-                        UINTN value = *p;
-                        EFI_GUID guid = EFI_GLOBAL_VARIABLE_GUID;
-                        UINT32 attr = EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS |
-                                      EFI_VARIABLE_RUNTIME_ACCESS;
+                if(position != 0) {
+                    for (UINTN i = 0; i < data_size / 2; i++) {
+                        if(position == (i+1)) {
+                            // Change BootNext value - set new UINT16
+                            UINTN value = *p;
+                            EFI_GUID guid = EFI_GLOBAL_VARIABLE_GUID;
+                            UINT32 attr = EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS |
+                                          EFI_VARIABLE_RUNTIME_ACCESS;
 
-                        status = rs->SetVariable(u"BootNext", &guid, attr, 2, &value);
-                        if (EFI_ERROR(status)) 
-                            error(status, u"Could not Set new value for BootNext.\r\n");
+                            status = rs->SetVariable(u"BootNext", &guid, attr, 2, &value);
+                            if (EFI_ERROR(status)) 
+                                error(status, u"Could not Set new value for BootNext.\r\n");
+                        }
+                        *p++;
                     }
-                    *p++;
+                }
+                else {
+                    UINTN value = 0;
+                    EFI_GUID guid = EFI_GLOBAL_VARIABLE_GUID;
+                    UINT32 attr = EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS |
+                                  EFI_VARIABLE_RUNTIME_ACCESS;
+                    status = rs->SetVariable(u"BootNext", &guid, attr, 2, &value);
                 }
 
                 goto next;
@@ -3268,6 +3277,9 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
                     }
                     else if (key.UnicodeChar == u'3') {
                       change_boot_next(3);
+                    }
+                    else if (key.UnicodeChar == u'0') {
+                      change_boot_next(0);
                     }
                     else if (key.UnicodeChar == u'`') {
                         load_kernel();
