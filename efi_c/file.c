@@ -1760,7 +1760,7 @@ EFI_STATUS inspect_kernel(void) {
 // ==========================================
 // Read a file from the basic data partition
 // ==========================================
-EFI_STATUS load_kernel(void) {
+EFI_STATUS load_kernel(uint8_t* file) {
     EFI_HII_PACKAGE_LIST_HEADER *pkg_list = NULL;   
     EFI_STATUS status = EFI_SUCCESS;
 
@@ -1779,7 +1779,7 @@ EFI_STATUS load_kernel(void) {
 
     // Get kernel file from data partition on disk 
     UINTN file_size = 0;
-    VOID *disk_buffer = read_data_partition_file_to_buffer("kernel", false, &file_size);
+    VOID *disk_buffer = read_data_partition_file_to_buffer(file, false, &file_size);
     if (!disk_buffer) {
         error(0, u"Could not find or read kernel file to buffer\r\n");
         goto cleanup;
@@ -3028,7 +3028,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
         if (root) root->Close(root);
     }
 
-    if (autoload_kernel) load_kernel(); // Load kernel; Should not return!
+    if (autoload_kernel) load_kernel("kernel"); // Load kernel; Should not return!
 
     // Menu text on screen
     const CHAR16 *menu_choices[] = {
@@ -3282,7 +3282,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
                       change_boot_next(0);
                     }
                     else if (key.UnicodeChar == u'`') {
-                        load_kernel();
+                        load_kernel("file"); //reference (to set kitchen microwave clock)
                     }
                     break;
             }
