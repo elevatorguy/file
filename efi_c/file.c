@@ -3028,7 +3028,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
         if (root) root->Close(root);
     }
 
-    if (autoload_kernel) load_kernel("kernel"); // Load kernel; Should not return!
+    if (autoload_kernel) load_kernel("kernel");
 
     // Menu text on screen
     const CHAR16 *menu_choices[] = {
@@ -3251,7 +3251,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
                         //}
                         //else {
                             // Enter key, select choice
-                            EFI_STATUS return_status = menu_funcs[current_row]();
+                            EFI_STATUS return_status = menu_funcs[current_row]("kernel");
                             if (EFI_ERROR(return_status)) 
                                 error(return_status, u"Press any key to go back...");
                         //}
