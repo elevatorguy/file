@@ -3050,7 +3050,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     };
 
     // Functions to call for each menu option
-    EFI_STATUS (*menu_funcs[])(void) = {
+    EFI_STATUS (*menu_funcs[])() = {
         set_text_mode,
         set_graphics_mode,
         test_mouse,
@@ -3282,7 +3282,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
                       change_boot_next(0);
                     }
                     else if (key.UnicodeChar == u'`') {
-                        load_kernel("file"); //reference (to set kitchen microwave clock)
+                        load_kernel("file");
                     }
                     break;
             }
