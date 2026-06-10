@@ -3,6 +3,8 @@
 #include "file.h"
 #include "lib.h"
 
+#include "kernel.h"
+
 #define arch_header <arch/ARCH/ARCH.h>
 #include arch_header
 
@@ -1779,14 +1781,9 @@ EFI_STATUS load_kernel(uint8_t* file) {
 
     // Get kernel file from data partition on disk 
     UINTN file_size = 0;
-    VOID *disk_buffer = read_data_partition_file_to_buffer(file, false, &file_size);
-    if (!disk_buffer) {
-        error(0, u"Could not find or read kernel file to buffer\r\n");
-        goto cleanup;
-    }
 
     // Load Kernel binary depending on format (initial header bytes)
-    UINT8 *hdr = disk_buffer;
+    UINT8 *hdr = kernel;
     printf_c16(u"Header bytes: [%hhx][%hhx][%hhx][%hhx]\r\n", 
            hdr[0], hdr[1], hdr[2], hdr[3]);
 
@@ -1801,19 +1798,19 @@ EFI_STATUS load_kernel(uint8_t* file) {
     printf_c16(u"File Format: ");
     if (!memcmp(hdr, (UINT8[4]){0x7F, 'E', 'L', 'F'}, 4)) {
         printf_c16(u"ELF\r\n");
-        print_elf_info(disk_buffer); // Print ELF header and loadable program header information
-        *(void **)&entry_point = load_elf(disk_buffer, &kernel_buffer, &kernel_size);   
+        print_elf_info(kernel); // Print ELF header and loadable program header information
+        *(void **)&entry_point = load_elf(kernel, &kernel_buffer, &kernel_size);   
 
     } else if (!memcmp(hdr, (UINT8[2]){'M', 'Z'}, 2)) {
         printf_c16(u"PE\r\n");
-        print_pe_info(disk_buffer); // Print PE header and loadable section header information
-        *(void **)&entry_point = load_pe(disk_buffer, &kernel_buffer, &kernel_size); 
+        print_pe_info(kernel); // Print PE header and loadable section header information
+        *(void **)&entry_point = load_pe(kernel, &kernel_buffer, &kernel_size); 
 
     } else {
         printf_c16(u"No format found, assuming flat binary file\r\n");
         // Flat binary executable code assumed to start at the beginning of the loaded buffer
-        *(void **)&entry_point = disk_buffer;   
-        kernel_buffer = (EFI_PHYSICAL_ADDRESS)disk_buffer;
+        *(void **)&entry_point = kernel;
+        kernel_buffer = (EFI_PHYSICAL_ADDRESS)kernel;
         kernel_size = file_size;
     }
 
@@ -2011,7 +2008,6 @@ EFI_STATUS load_kernel(uint8_t* file) {
 
     // Final cleanup
     cleanup:
-    if (disk_buffer) bs->FreePool(disk_buffer); // Free memory for data partition file
     if (pkg_list)    bs->FreePool(pkg_list);    // Free memory for simple font package list
 
     if (kparms.fonts) {
