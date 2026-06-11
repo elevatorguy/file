@@ -31,7 +31,7 @@ DISK_IMG_PGM = write_gpt
 DISK_IMG_FOLDER = . #~/.local/bin
 RELATIVE_PATH = ./
 DELETE_CMD = rm
-ELFCC = icx -target $(ARCH)-$(MACHINE)-elf
+ELFCC = clang -target $(ARCH)-$(MACHINE)-elf
 endif
 
 ifeq ($(ARCH), x86_64)
@@ -49,14 +49,13 @@ endif
 	-e efi_main 
 
 # Uncomment CC/LDFLAGS for EFI object - clang
-EFICC       = icx -target $(ARCH)-$(MACHINE)-windows
+EFICC       = clang -target $(ARCH)-$(MACHINE)-windows
 EFI_LDFLAGS = \
 	-nostdlib \
-	-fuse-ld=lld-link
+	-fuse-ld=lld-link \
+	-Wl,-subsystem:efi_application \
+	-Wl,-entry:efi_main
 EFI_LDFLAGS2 = \
-	-link \
-	/subsystem:efi_application \
-	/entry:efi_main
 
 # PE32+ files
 PECC  = $(ARCH)-w64-mingw32-gcc
@@ -80,7 +79,7 @@ FONT = ter-132n.psf	# PSF2 Bitmapped Font: Terminus 16x32 ISO8859-1
 
 # Add kernel binary to new disk image
 ADD_KERNEL = \
-    cd $(DISK_IMG_FOLDER) && $(DISK_IMG_PGM) -ds 95 -es 1000 -ae /EFI/BOOT/ $(RELATIVE_PATH)$(EFI_APP) -ad $(RELATIVE_PATH)$(FONT) $(RELATIVE_PATH)file $(RELATIVE_PATH)kernel && $(MOVE_CMD) file.img $(MOVE_DEST) && $(DELETE_CMD) FILE.TXT
+    cd $(DISK_IMG_FOLDER) && $(DISK_IMG_PGM) -es 1000 -ae /EFI/BOOT/ $(RELATIVE_PATH)$(EFI_APP) && $(MOVE_CMD) file.img $(MOVE_DEST)
 
 all: $(EFI_APP) $(KERNEL)
 
@@ -122,9 +121,11 @@ KERNEL_LDFLAGS = -e kmain -nostdlib -pie
 ELFLD = ld.lld
 
 $(EFI_APP): $(EFIOBJ)
-	$(EFICC) $(EFI_LDFLAGS) $< $(EFI_LDFLAGS2) -out:$@
+	$(EFICC) $(EFI_LDFLAGS) $< $(EFI_LDFLAGS2) -o $@
 
 $(EFIOBJ): $(EFISRC)
+	xxd -i $(FONT) > font.h && echo "xxd1"
+	xxd -i kernel > kernel.h && echo "xxd2"
 	$(EFICC) $(FLAGS) -c -o $@ $<
 
 kernel.elf: $(KERNEL_SRC)
@@ -134,7 +135,7 @@ kernel.elf: $(KERNEL_SRC)
 -include $(DEPENDS)
 
 clean:
-	$(DELETE_CMD) -rf $(EFI_APP) $(KERNEL) [!bios]*.bin* *.d *.efi *.EFI *.elf *.o *.obj *.pe
+	$(DELETE_CMD) -rf $(EFI_APP) $(KERNEL) [!bios]*.bin* *.d *.efi *.EFI *.elf *.o *.obj *.pe font.h kernel.h
 
 kernel_env.elf: $(ENV_SRC) $(ENV_WEIGHTS)
 	$(ELFCC) $(KERNEL_CFLAGS) $(KERNEL_LDFLAGS) -o $@ $< $(ENV_WEIGHTS) && $(MOVE_CMD) $@ kernel

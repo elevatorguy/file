@@ -4,6 +4,7 @@
 #include "lib.h"
 
 #include "kernel.h"
+#include "font.h"
 
 #define arch_header <arch/ARCH/ARCH.h>
 #include arch_header
@@ -1942,7 +1943,7 @@ EFI_STATUS load_kernel(uint8_t* file) {
     //   this one should be stored in the disk image's data partition
     char *psf_name = "ter-132n.psf";
     UINTN psf_size = 0;
-    VOID *psf_font = read_data_partition_file_to_buffer(psf_name, false, &psf_size);
+    VOID *psf_font = ter_132n_psf;
     if (psf_font) {
         PSF2_Header *psf2_hdr = psf_font;
         kparms.fonts[1] = (Bitmap_Font){
