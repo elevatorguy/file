@@ -81,7 +81,7 @@ FONT = ter-132n.psf	# PSF2 Bitmapped Font: Terminus 16x32 ISO8859-1
 ADD_KERNEL = \
     cd $(DISK_IMG_FOLDER) && $(DISK_IMG_PGM) -es 1000 -ae /EFI/BOOT/ $(RELATIVE_PATH)$(EFI_APP) && $(MOVE_CMD) file.img $(MOVE_DEST)
 
-all: $(EFI_APP) $(KERNEL)
+all: $(KERNEL) $(EFI_APP)
 
 $(DISK_IMG_FOLDER)/$(DISK_IMG_PGM):
 	cd $(DISK_IMG_FOLDER) && $(MAKE)
@@ -130,7 +130,6 @@ $(EFIOBJ): $(EFISRC)
 
 kernel.elf: $(KERNEL_SRC)
 	$(ELFCC) $(KERNEL_CFLAGS) $(KERNEL_LDFLAGS) -o $@ $< && $(MOVE_CMD) $@ kernel
-	$(ADD_KERNEL)
 
 -include $(DEPENDS)
 
