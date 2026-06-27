@@ -13,9 +13,9 @@ DATA_PARTITION = /dev/null #change this
 ifeq ($(OS), Windows_NT)
 HOST_OS     = Windows
 QEMU_SCRIPT = qemu_$(ARCH).bat
-FLAGS = $(QFLAGS)
+FLAGS = $(CFLAGS) # QFLAGS if using icx instead of clang
 MOVE_CMD = move
-MOVE_DEST = F:
+MOVE_DEST = /g/EFI/BOOT/BOOTX64.EFI #F: if file.img and not git bash
 DISK_IMG_PGM = file.exe
 DISK_IMG_FOLDER = ../UEFI-GPT-image-creator/
 RELATIVE_PATH = ../efi_c/
@@ -121,7 +121,7 @@ KERNEL_LDFLAGS = -e kmain -nostdlib -pie
 ELFLD = ld.lld
 
 $(EFI_APP): $(EFIOBJ)
-	$(EFICC) $(EFI_LDFLAGS) $< $(EFI_LDFLAGS2) -o $@
+	$(EFICC) $(EFI_LDFLAGS) $< $(EFI_LDFLAGS2) -o $@ && $(MOVE_CMD) $(EFI_APP) $(MOVE_DEST)
 
 $(EFIOBJ): $(EFISRC)
 	xxd -i $(FONT) > font.h && echo "xxd1"
@@ -134,7 +134,7 @@ kernel.elf: $(KERNEL_SRC)
 -include $(DEPENDS)
 
 clean:
-	$(DELETE_CMD) -rf $(EFI_APP) $(KERNEL) [!bios]*.bin* *.d *.efi *.EFI *.elf *.o *.obj *.pe font.h kernel.h
+	$(DELETE_CMD) -rf $(EFI_APP) kernel [!bios]*.bin* *.d *.efi *.EFI *.elf *.o *.obj *.pe font.h kernel.h
 
 kernel_env.elf: $(ENV_SRC) $(ENV_WEIGHTS)
 	$(ELFCC) $(KERNEL_CFLAGS) $(KERNEL_LDFLAGS) -o $@ $< $(ENV_WEIGHTS) && $(MOVE_CMD) $@ kernel
