@@ -1763,7 +1763,7 @@ EFI_STATUS inspect_kernel(void) {
 // ==========================================
 // Read a file from the basic data partition
 // ==========================================
-EFI_STATUS load_kernel(uint8_t* file) {
+EFI_STATUS load_kernel(void) {
     EFI_HII_PACKAGE_LIST_HEADER *pkg_list = NULL;   
     EFI_STATUS status = EFI_SUCCESS;
 
@@ -3025,7 +3025,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
         if (root) root->Close(root);
     }
 
-    if (autoload_kernel) load_kernel("kernel");
+    if (autoload_kernel) load_kernel();
 
     // Menu text on screen
     const CHAR16 *menu_choices[] = {
@@ -3047,7 +3047,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
     };
 
     // Functions to call for each menu option
-    EFI_STATUS (*menu_funcs[])() = {
+    EFI_STATUS (*menu_funcs[])(void) = {
         set_text_mode,
         set_graphics_mode,
         test_mouse,
@@ -3248,7 +3248,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
                         //}
                         //else {
                             // Enter key, select choice
-                            EFI_STATUS return_status = menu_funcs[current_row]("kernel");
+                            EFI_STATUS return_status = menu_funcs[current_row]();
                             if (EFI_ERROR(return_status)) 
                                 error(return_status, u"Press any key to go back...");
                         //}
@@ -3277,9 +3277,6 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
                     }
                     else if (key.UnicodeChar == u'0') {
                       change_boot_next(0);
-                    }
-                    else if (key.UnicodeChar == u'`') {
-                        load_kernel("file");
                     }
                     break;
             }
