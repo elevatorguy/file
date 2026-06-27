@@ -25,8 +25,8 @@ else
 HOST_OS     = Linux
 QEMU_SCRIPT = ./qemu_$(ARCH).sh
 FLAGS = $(CFLAGS)
-MOVE_CMD = mv
-MOVE_DEST = /tmp
+MOVE_CMD = sudo mv
+MOVE_DEST = /mnt/esp/EFI/BOOT/BOOTX64.EFI #/tmp if image
 DISK_IMG_PGM = write_gpt
 DISK_IMG_FOLDER = . #~/.local/bin
 RELATIVE_PATH = ./
