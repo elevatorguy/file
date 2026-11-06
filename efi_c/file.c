@@ -902,7 +902,6 @@ EFI_STATUS test_network(void) {
     cout->ClearScreen(cout);
 
     static bool first = true;
-
     EFI_GUID netGuid = EFI_SIMPLE_NETWORK_PROTOCOL_GUID;
     EFI_SIMPLE_NETWORK_PROTOCOL* netProtocol;
     EFI_STATUS status = bs->LocateProtocol(&netGuid, NULL, (VOID**)&netProtocol);
