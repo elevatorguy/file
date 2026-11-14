@@ -2970,6 +2970,340 @@ EFI_STATUS write_to_another_disk(void) {
     return EFI_SUCCESS;
 }
 
+// ====================
+// Intel HDA Sound Test
+// ====================
+#define HDA_GCTL        0x08
+#define HDA_STATESTS    0x0E
+#define HDA_IC          0x60
+#define HDA_IR          0x64
+#define HDA_IRS         0x68
+
+#define HDA_VERB8(cad, nid, verb, payload) \
+    (((UINT32)(cad) << 28) | ((UINT32)(nid) << 20) | ((UINT32)(verb) << 8) | ((UINT32)(payload) & 0xFF))
+#define HDA_VERB16(cad, nid, verb, payload) \
+    (((UINT32)(cad) << 28) | ((UINT32)(nid) << 20) | ((UINT32)(verb) << 16) | ((UINT32)(payload) & 0xFFFF))
+
+static void hda_stall(UINTN us) {
+    ((EFI_STATUS (EFIAPI *)(UINTN))bs->Stall)(us);
+}
+
+static UINT32 hda_read32(EFI_PCI_IO_PROTOCOL *pci, UINT64 off) {
+    UINT32 val = 0;
+    pci->Mem.Read(pci, EfiPciIoWidthUint32, 0, off, 1, &val);
+    return val;
+}
+static void hda_write32(EFI_PCI_IO_PROTOCOL *pci, UINT64 off, UINT32 val) {
+    pci->Mem.Write(pci, EfiPciIoWidthUint32, 0, off, 1, &val);
+}
+static UINT16 hda_read16(EFI_PCI_IO_PROTOCOL *pci, UINT64 off) {
+    UINT16 val = 0;
+    pci->Mem.Read(pci, EfiPciIoWidthUint16, 0, off, 1, &val);
+    return val;
+}
+static void hda_write16(EFI_PCI_IO_PROTOCOL *pci, UINT64 off, UINT16 val) {
+    pci->Mem.Write(pci, EfiPciIoWidthUint16, 0, off, 1, &val);
+}
+static UINT8 hda_read8(EFI_PCI_IO_PROTOCOL *pci, UINT64 off) {
+    UINT8 val = 0;
+    pci->Mem.Read(pci, EfiPciIoWidthUint8, 0, off, 1, &val);
+    return val;
+}
+static void hda_write8(EFI_PCI_IO_PROTOCOL *pci, UINT64 off, UINT8 val) {
+    pci->Mem.Write(pci, EfiPciIoWidthUint8, 0, off, 1, &val);
+}
+
+static UINT32 *g_corb = NULL;
+static UINT64 *g_rirb = NULL;
+static UINT16 g_corb_wp = 0;
+static UINT16 g_rirb_rp = 0;
+
+static EFI_STATUS hda_init_corb_rirb(EFI_PCI_IO_PROTOCOL *pci) {
+    EFI_PHYSICAL_ADDRESS corb_phys = 0;
+    EFI_PHYSICAL_ADDRESS rirb_phys = 0;
+    EFI_STATUS status = bs->AllocatePages(AllocateAnyPages, EfiLoaderData, 1, &corb_phys);
+    if (EFI_ERROR(status)) return status;
+    status = bs->AllocatePages(AllocateAnyPages, EfiLoaderData, 1, &rirb_phys);
+    if (EFI_ERROR(status)) {
+        bs->FreePages(corb_phys, 1);
+        return status;
+    }
+    g_corb = (UINT32 *)(UINTN)corb_phys;
+    g_rirb = (UINT64 *)(UINTN)rirb_phys;
+    g_corb_wp = 0;
+    g_rirb_rp = 0;
+    for (UINTN i = 0; i < 1024 / 4; i++) g_corb[i] = 0;
+    for (UINTN i = 0; i < 2048 / 8; i++) g_rirb[i] = 0;
+
+    hda_write32(pci, 0x40, (UINT32)(corb_phys & 0xFFFFFFFF));
+    hda_write32(pci, 0x44, (UINT32)(corb_phys >> 32));
+    hda_write32(pci, 0x50, (UINT32)(rirb_phys & 0xFFFFFFFF));
+    hda_write32(pci, 0x54, (UINT32)(rirb_phys >> 32));
+
+    UINT8 corbsize = hda_read8(pci, 0x4E);
+    if (corbsize & 0x40) hda_write8(pci, 0x4E, 0x02);
+    else if (corbsize & 0x20) hda_write8(pci, 0x4E, 0x01);
+    else hda_write8(pci, 0x4E, 0x00);
+
+    UINT8 rirbsize = hda_read8(pci, 0x5E);
+    if (rirbsize & 0x40) hda_write8(pci, 0x5E, 0x02);
+    else if (rirbsize & 0x20) hda_write8(pci, 0x5E, 0x01);
+    else hda_write8(pci, 0x5E, 0x00);
+
+    hda_write16(pci, 0x4A, 0x8000);
+    for (int i = 0; i < 100; i++) {
+        if (hda_read16(pci, 0x4A) & 0x8000) break;
+        hda_stall(10);
+    }
+    hda_write16(pci, 0x4A, 0x0000);
+
+    hda_write16(pci, 0x58, 0x8000);
+    for (int i = 0; i < 100; i++) {
+        if (hda_read16(pci, 0x58) & 0x8000) break;
+        hda_stall(10);
+    }
+    hda_write16(pci, 0x58, 0x0000);
+
+    hda_write16(pci, 0x48, 0);
+    hda_write16(pci, 0x5A, 1);
+    hda_write8(pci, 0x4C, 0x02);
+    hda_write8(pci, 0x5C, 0x02);
+    hda_stall(1000);
+    return EFI_SUCCESS;
+}
+
+static UINT32 hda_send_verb(EFI_PCI_IO_PROTOCOL *pci, UINT32 verb) {
+    if (!g_corb || !g_rirb) return 0;
+    g_corb_wp = (g_corb_wp + 1) & 0xFF;
+    g_corb[g_corb_wp] = verb;
+    hda_write16(pci, 0x48, g_corb_wp);
+    UINT16 rirbwp = g_rirb_rp;
+    for (int i = 0; i < 1000; i++) {
+        rirbwp = hda_read16(pci, 0x58) & 0xFF;
+        if (rirbwp != g_rirb_rp) break;
+        hda_stall(10);
+    }
+    UINT64 resp = g_rirb[rirbwp];
+    g_rirb_rp = rirbwp;
+    return (UINT32)(resp & 0xFFFFFFFF);
+}
+
+static EFI_PCI_IO_PROTOCOL *hda_find_pci(void) {
+    EFI_GUID pci_guid = EFI_PCI_IO_PROTOCOL_GUID;
+    EFI_HANDLE *handles = NULL;
+    UINTN count = 0;
+    EFI_STATUS status = bs->LocateHandleBuffer(ByProtocol, &pci_guid, NULL, &count, &handles);
+    if (EFI_ERROR(status)) return NULL;
+    EFI_PCI_IO_PROTOCOL *result = NULL;
+    for (UINTN i = 0; i < count; i++) {
+        EFI_PCI_IO_PROTOCOL *pci = NULL;
+        status = bs->OpenProtocol(handles[i], &pci_guid, (VOID **)&pci, image, NULL, EFI_OPEN_PROTOCOL_GET_PROTOCOL);
+        if (EFI_ERROR(status)) continue;
+        UINT32 vendor_device = 0;
+        UINT32 class_rev = 0;
+        pci->Pci.Read(pci, EfiPciIoWidthUint32, 0x00, 1, &vendor_device);
+        pci->Pci.Read(pci, EfiPciIoWidthUint32, 0x08, 1, &class_rev);
+        UINT16 vendor = (UINT16)(vendor_device & 0xFFFF);
+        UINT8 base_class = (UINT8)(class_rev >> 24);
+        UINT8 subclass = (UINT8)(class_rev >> 16);
+        if (vendor == 0x8086 && base_class == 0x04 && subclass == 0x03) {
+            result = pci;
+            break;
+        }
+    }
+    if (handles) bs->FreePool(handles);
+    return result;
+}
+
+
+// Program a stream descriptor: reset, stream tag, CBL, format, LVI, BDL.
+static void hda_program_stream(EFI_PCI_IO_PROTOCOL *pci, UINT64 sd, UINT8 tag,
+                               UINT16 fmt, EFI_PHYSICAL_ADDRESS buf_phys,
+                               UINT32 size, EFI_PHYSICAL_ADDRESS bdl_phys) {
+    UINT32 *bdl = (UINT32 *)(UINTN)bdl_phys;
+    bdl[0] = (UINT32)(buf_phys & 0xFFFFFFFF);
+    bdl[1] = (UINT32)(buf_phys >> 32);
+    bdl[2] = size;
+    bdl[3] = 1; // Interrupt On Completion
+    hda_write32(pci, sd + 0x00, 1);          // enter reset
+    hda_stall(1000);
+    hda_write32(pci, sd + 0x00, 0);          // leave reset
+    hda_stall(1000);
+    hda_write32(pci, sd + 0x00, (UINT32)tag << 20); // stream tag
+    hda_write32(pci, sd + 0x08, size);       // cyclic buffer length
+    hda_write16(pci, sd + 0x12, fmt);        // stream format
+    hda_write16(pci, sd + 0x0C, 0);          // last valid index
+    hda_write32(pci, sd + 0x18, (UINT32)(bdl_phys & 0xFFFFFFFF));
+    hda_write32(pci, sd + 0x1C, (UINT32)(bdl_phys >> 32));
+}
+
+static void hda_stop_stream(EFI_PCI_IO_PROTOCOL *pci, UINT64 sd, UINT8 tag) {
+    hda_write32(pci, sd + 0x00, (UINT32)tag << 20); // clear RUN
+    hda_stall(1000);
+    hda_write32(pci, sd + 0x00, 1); // reset
+    hda_stall(1000);
+    hda_write32(pci, sd + 0x00, 0);
+    hda_stall(1000);
+}
+
+EFI_STATUS test_mic(void) {
+    cout->ClearScreen(cout);
+    printf_c16(u"Intel HDA Mic Loopback (record 5s, then play)\r\n");
+
+    EFI_PCI_IO_PROTOCOL *pci = hda_find_pci();
+    if (!pci) {
+        printf_c16(u"ERROR: Intel HDA PCI device not found.\r\n");
+        printf_c16(u"Press any key to go back...\r\n");
+        get_key();
+        return EFI_NOT_FOUND;
+    }
+
+    EFI_STATUS status = pci->Attributes(pci, EfiPciIoAttributeOperationEnable,
+                                        EFI_PCI_IO_ATTRIBUTE_MEMORY | EFI_PCI_IO_ATTRIBUTE_BUS_MASTER, NULL);
+    if (EFI_ERROR(status)) {
+        error(status, u"of PciIo->Attributes\r\n");
+        printf_c16(u"Press any key to go back...\r\n");
+        get_key();
+        return status;
+    }
+
+    // Reset controller and wait for CRST
+    UINT32 gctl = hda_read32(pci, HDA_GCTL);
+    hda_write32(pci, HDA_GCTL, gctl & ~1u);
+    hda_stall(1000);
+    hda_write32(pci, HDA_GCTL, gctl | 1u);
+    for (int i = 0; i < 1000; i++) {
+        if (hda_read32(pci, HDA_GCTL) & 1u) break;
+        hda_stall(100);
+    }
+    if (!(hda_read32(pci, HDA_GCTL) & 1u)) {
+        printf_c16(u"ERROR: Controller reset failed.\r\n");
+        printf_c16(u"Press any key to go back...\r\n");
+        get_key();
+        return EFI_DEVICE_ERROR;
+    }
+    UINT32 gcap = hda_read32(pci, 0x00);
+
+    EFI_STATUS cstatus = hda_init_corb_rirb(pci);
+    if (EFI_ERROR(cstatus)) {
+        error(cstatus, u"of hda_init_corb_rirb\r\n");
+        printf_c16(u"Press any key to go back...\r\n");
+        get_key();
+        return cstatus;
+    }
+    for (int i = 0; i < 1000; i++) {
+        if (hda_read16(pci, HDA_STATESTS) & 1u) break;
+        hda_stall(100);
+    }
+    if (!(hda_read16(pci, HDA_STATESTS) & 1u)) {
+        printf_c16(u"ERROR: No codec found.\r\n");
+        printf_c16(u"Press any key to go back...\r\n");
+        get_key();
+        return EFI_NOT_FOUND;
+    }
+    hda_write16(pci, HDA_STATESTS, 0xFFFF);
+
+    UINT8 cad = 0;
+    UINT8 mic_boost = 3;  // 0..3 -> 0, 9.75, 19.5, 29.25 dB
+    UINT8 cap_gain  = 46; // 16 = 0 dB, 0.75 dB/step -> +22.5 dB
+
+    // Playback path: DAC 0x02 -> mixer 0x0c -> pin 0x14 (front line out)
+    hda_send_verb(pci, HDA_VERB8(cad, 0x01, 0x705, 0x00)); // AFG power D0
+    hda_send_verb(pci, HDA_VERB8(cad, 0x02, 0x705, 0x00)); // DAC power D0
+    hda_send_verb(pci, HDA_VERB8(cad, 0x14, 0x705, 0x00)); // pin power D0
+    hda_send_verb(pci, HDA_VERB8(cad, 0x14, 0x707, 0x40)); // pin output enable
+    hda_send_verb(pci, HDA_VERB8(cad, 0x14, 0x70C, 0x02)); // EAPD on
+    hda_send_verb(pci, HDA_VERB8(cad, 0x0C, 0x701, 0x00)); // mixer in 0 = DAC 0x02
+    hda_send_verb(pci, HDA_VERB16(cad, 0x02, 0x3, 0xB040)); // DAC out, 0 dB, unmute
+    hda_send_verb(pci, HDA_VERB16(cad, 0x0C, 0x3, 0x7000)); // mixer in 0, unmute
+    hda_send_verb(pci, HDA_VERB16(cad, 0x14, 0x3, 0xB000)); // pin out, unmute
+    hda_send_verb(pci, HDA_VERB16(cad, 0x02, 0x2, 0x0011)); // 48kHz, 16-bit, stereo
+    hda_send_verb(pci, HDA_VERB8(cad, 0x02, 0x706, 0x10));  // DAC stream tag 1
+
+    // Capture path: rear mic 0x18 -> mixer 0x23 -> ADC 0x08 (front panel not wired)
+    hda_send_verb(pci, HDA_VERB8(cad, 0x08, 0x705, 0x00)); // ADC power D0
+    hda_send_verb(pci, HDA_VERB8(cad, 0x18, 0x705, 0x00)); // rear mic power D0
+    hda_send_verb(pci, HDA_VERB8(cad, 0x18, 0x707, 0x21)); // rear mic: IN, VREF_50
+    hda_send_verb(pci, HDA_VERB8(cad, 0x19, 0x707, 0x00)); // front mic: disabled
+    hda_send_verb(pci, HDA_VERB16(cad, 0x18, 0x3, 0x7000 | mic_boost)); // rear mic boost
+    hda_send_verb(pci, HDA_VERB16(cad, 0x23, 0x3, 0x7000)); // unmute rear mic (conn 0)
+    hda_send_verb(pci, HDA_VERB16(cad, 0x08, 0x3, 0x7000 | cap_gain)); // ADC capture vol
+    hda_send_verb(pci, HDA_VERB8(cad, 0x08, 0x704, 0x00));  // SDI select 0
+    hda_send_verb(pci, HDA_VERB16(cad, 0x08, 0x2, 0x0011)); // 48kHz, 16-bit, stereo
+    hda_send_verb(pci, HDA_VERB8(cad, 0x08, 0x706, 0x20));  // ADC stream tag 2
+
+    UINT32 adcfmt = hda_send_verb(pci, HDA_VERB8(cad, 0x08, 0xA00, 0x00));
+    UINT32 adcamp = hda_send_verb(pci, HDA_VERB16(cad, 0x08, 0xB, 0x2000));
+    UINT32 micamp = hda_send_verb(pci, HDA_VERB16(cad, 0x18, 0xB, 0x2000));
+    UINT32 rearmic = hda_send_verb(pci, HDA_VERB8(cad, 0x18, 0xF07, 0x00));
+    printf_c16(u"ADC fmt=0x%04x capamp=0x%04x micboost=0x%04x pin=0x%02x\r\n",
+               adcfmt, adcamp, micamp, rearmic);
+
+    // Allocate 5 s capture buffer (48kHz, 16-bit, stereo) + one BDL page
+    UINT32 cap_size = 48000u * 2u * 2u * 5u;
+    UINTN buf_pages = (cap_size + PAGE_SIZE - 1) / PAGE_SIZE;
+    EFI_PHYSICAL_ADDRESS buf_phys = 0;
+    status = bs->AllocatePages(AllocateAnyPages, EfiLoaderData, buf_pages, &buf_phys);
+    if (EFI_ERROR(status)) {
+        error(status, u"of AllocatePages for capture buffer\r\n");
+        printf_c16(u"Press any key to go back...\r\n");
+        get_key();
+        return status;
+    }
+    UINT8 *buf = (UINT8 *)(UINTN)buf_phys;
+    for (UINTN i = 0; i < cap_size; i++) buf[i] = 0;
+
+    EFI_PHYSICAL_ADDRESS bdl_phys = 0;
+    status = bs->AllocatePages(AllocateAnyPages, EfiLoaderData, 1, &bdl_phys);
+    if (EFI_ERROR(status)) {
+        bs->FreePages(buf_phys, buf_pages);
+        error(status, u"of AllocatePages for BDL\r\n");
+        printf_c16(u"Press any key to go back...\r\n");
+        get_key();
+        return status;
+    }
+
+    UINT8 niss = (gcap >> 8) & 0x0F;
+    if (niss == 0) niss = 4;
+    UINT64 cap_sd = 0x80;                // first input stream descriptor
+    UINT64 pb_sd  = 0x80 + 0x20 * niss;  // first output stream descriptor
+    printf_c16(u"Capture SD=0x%llx Playback SD=0x%llx\r\n", cap_sd, pb_sd);
+
+    printf_c16(u"Press any key to start recording 5 seconds...\r\n");
+    get_key();
+
+    // Record
+    hda_program_stream(pci, cap_sd, 2, 0x0011, buf_phys, cap_size, bdl_phys);
+    hda_write32(pci, cap_sd + 0x00, (2u << 20) | (1u << 1)); // tag 2 + RUN
+    hda_stall(200000);
+    UINT32 cap_lpib1 = hda_read32(pci, cap_sd + 0x04);
+    hda_stall(200000);
+    UINT32 cap_lpib2 = hda_read32(pci, cap_sd + 0x04);
+    printf_c16(u"Capture LPIB %u -> %u\r\n", cap_lpib1, cap_lpib2);
+    hda_stall(4600000); // finish the 5 s recording
+    UINT32 lpib = hda_read32(pci, cap_sd + 0x04);
+    UINT8 cap_sts = hda_read8(pci, cap_sd + 0x03);
+    hda_stop_stream(pci, cap_sd, 2);
+    printf_c16(u"Recorded. LPIB=%u/%u sts=0x%02x\r\n", lpib, cap_size, cap_sts);
+
+    // Play back the captured samples
+    hda_program_stream(pci, pb_sd, 1, 0x0011, buf_phys, cap_size, bdl_phys);
+    hda_write32(pci, pb_sd + 0x00, (1u << 20) | (1u << 1)); // tag 1 + RUN
+    printf_c16(u"Playing back...\r\n");
+    hda_stall(5000000); // 5 s
+    hda_stop_stream(pci, pb_sd, 1);
+
+    bs->FreePages(buf_phys, buf_pages);
+    bs->FreePages(bdl_phys, 1);
+    if (g_corb) { bs->FreePages((EFI_PHYSICAL_ADDRESS)(UINTN)g_corb, 1); g_corb = NULL; }
+    if (g_rirb) { bs->FreePages((EFI_PHYSICAL_ADDRESS)(UINTN)g_rirb, 1); g_rirb = NULL; }
+
+    printf_c16(u"Mic loopback test complete.\r\n");
+    printf_c16(u"Press any key to go back...\r\n");
+    get_key();
+    return EFI_SUCCESS;
+}
+
 EFI_STATUS placeholder(void) {
     printf_c16(u"Is this a feature?\r\n");
     EFI_INPUT_KEY key = get_key();
@@ -3032,6 +3366,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
         u"Set Graphics Mode",
         u"Test Mouse",
         u"Test Network",
+        u"Mic Loopback",
         u"Read ESP Files",
         u"Print Block IO Partitions",
         u"Print Memory Map",
@@ -3051,6 +3386,7 @@ EFI_STATUS efi_main(EFI_HANDLE ImageHandle, EFI_SYSTEM_TABLE *SystemTable) {
         set_graphics_mode,
         test_mouse,
         test_network,
+        test_mic,
         read_esp_files,
         print_block_io_partitions,
         print_memory_map,
